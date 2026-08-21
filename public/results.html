@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="短片票選正式結果。">
+  <title>票選結果｜短片票選</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="result-hero">
+    <nav class="nav" aria-label="主要導覽">
+      <a class="brand" href="./"><span>綠照</span>好時光</a>
+      <a href="./">首頁</a>
+      <a class="current" href="results.html" aria-current="page">票選結果</a>
+    </nav>
+    <div class="result-hero-inner">
+      <p class="eyebrow">綠色照顧短影音競賽</p>
+      <h1><span>綠照</span>好時光<small>網路人氣票選結果</small></h1>
+      <div class="result-summary">
+        <p id="resultLead">正在讀取票選結果。</p>
+        <p id="resultPeriod"></p>
+      </div>
+    </div>
+  </header>
+
+  <main class="results-main">
+    <div id="previewNotice" class="preview-notice" hidden>
+      <strong>開發預覽</strong>
+      <span>目前顯示資料庫內的測試票數，正式環境不會在活動期間公開。</span>
+    </div>
+    <section id="resultsUnavailable" class="results-unavailable" hidden>
+      <p class="eyebrow">結果尚未公布</p>
+      <h2>謝謝你的參與</h2>
+      <p id="unavailableMessage">正式結果將於投票截止並完成票數確認後公布。</p>
+      <a class="primary-link" href="./">返回投票首頁</a>
+    </section>
+
+    <section id="resultsContent" hidden>
+      <div class="category-tabs result-tabs" role="tablist" aria-label="票選結果組別">
+        <button id="resultIndividualTab" class="category-tab active" type="button" role="tab" aria-selected="true" aria-controls="rankingPanel" data-category="individual">
+          <span>個人組</span><small>15 支參賽作品</small>
+        </button>
+        <button id="resultTeamTab" class="category-tab" type="button" role="tab" aria-selected="false" aria-controls="rankingPanel" data-category="team">
+          <span>團體組</span><small>15 支參賽作品</small>
+        </button>
+      </div>
+
+      <div class="ranking-heading">
+        <div><p class="eyebrow">正式排名</p><h2 id="rankingTitle">個人組票選結果</h2></div>
+        <p>票數已排除待確認及作廢紀錄。</p>
+      </div>
+      <div id="rankingPanel" role="tabpanel" aria-labelledby="resultIndividualTab">
+        <div id="topResults" class="top-results"></div>
+        <section class="other-results" aria-labelledby="otherResultsTitle">
+          <h3 id="otherResultsTitle">其他作品排名</h3>
+          <ol id="otherResultsList" class="ranking-list"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer><p>主辦單位保留異常票數審核及最終結果認定之權利。</p><a href="./">返回首頁</a></footer>
+  <script src="api-client.js?v=pages-demo-1"></script>
+  <script type="module" src="results.js?v=pages-demo-1"></script>
+</body>
+</html>

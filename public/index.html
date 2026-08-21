@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="30 支參賽影片線上展映與觀眾票選。">
+  <title>短片票選｜線上展映</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav" aria-label="主要導覽">
+      <a class="brand" href="#top"><span>綠照</span>好時光</a>
+      <a href="#works">參賽作品</a>
+      <a href="#rules">投票辦法</a>
+      <a href="results.html">票選結果</a>
+    </nav>
+    <div class="hero-inner" id="top">
+      <p class="eyebrow">綠色照顧短影音競賽・網路人氣票選</p>
+      <h1><span>綠照</span>好時光<small>看見每一段值得被記住的故事</small></h1>
+      <div class="hero-meta">
+        <p>觀看任一作品達 80%，即可投下活動期間唯一的一票。無需註冊或登入。</p>
+        <a class="primary-link" href="#works">開始觀賞</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="status-bar" aria-live="polite">
+      <span id="activityStatus">讀取活動狀態中</span>
+      <span id="voteStatus">每台裝置限投一票</span>
+    </section>
+
+    <section class="works" id="works">
+      <div class="section-heading">
+        <div><p class="eyebrow">線上展映</p><h2>參賽作品</h2><p class="section-intro">選擇組別，觀看每一支入選作品。</p></div>
+      </div>
+      <div class="category-tabs" role="tablist" aria-label="參賽組別">
+        <button id="individualTab" class="category-tab active" type="button" role="tab" aria-selected="true" aria-controls="videoGrid" data-category="individual">
+          <span>個人組</span><small>15 支參賽作品</small>
+        </button>
+        <button id="teamTab" class="category-tab" type="button" role="tab" aria-selected="false" aria-controls="videoGrid" data-category="team">
+          <span>團體組</span><small>15 支參賽作品</small>
+        </button>
+      </div>
+      <div class="group-heading"><div><p id="groupTitle">個人組</p><span id="groupDescription">個人參賽作品</span></div><strong id="groupCount">共 15 支作品</strong></div>
+      <div id="videoGrid" class="video-grid" role="tabpanel" aria-labelledby="individualTab" aria-live="polite"></div>
+    </section>
+
+    <section class="rules" id="rules">
+      <div><p class="eyebrow">投票辦法</p><h2>看完，再決定。</h2></div>
+      <ol>
+        <li><span>01</span>選擇一支作品並開始播放。</li>
+        <li><span>02</span>有效觀看達影片長度 80%。</li>
+        <li><span>03</span>完成驗證並投下唯一一票。</li>
+      </ol>
+      <p class="privacy-note">為維護票選公平，系統會使用必要 Cookie、網路與裝置資訊偵測異常投票。資料僅用於本次活動防舞弊及稽核，活動結束後依主辦單位公告期限刪除。</p>
+    </section>
+  </main>
+
+  <dialog id="watchDialog" class="watch-dialog">
+    <button class="close" id="closeDialog" aria-label="關閉播放器">關閉</button>
+    <div class="player-wrap"><div id="youtubePlayer"></div><div id="unavailable" class="unavailable" hidden>影片尚未設定，請稍後再來。</div></div>
+    <div class="watch-info">
+      <div><p id="dialogNumber" class="eyebrow"></p><h2 id="dialogTitle"></h2><p id="dialogTeam"></p></div>
+      <div class="progress-block"><div class="progress-label"><span>有效觀看進度</span><strong id="progressText">0%</strong></div><div class="progress"><span id="progressBar"></span></div><p id="progressHint">觀看達 80% 後即可投票。快轉及背景播放不列入進度。</p></div>
+      <div id="turnstileBox"></div>
+      <button id="voteButton" class="vote-button" disabled>尚未達投票門檻</button>
+      <p id="dialogMessage" class="message" role="status"></p>
+    </div>
+  </dialog>
+
+  <footer><p>主辦單位保留審核與刪除異常票數之權利。</p><a href="#top">回到頂端</a></footer>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="api-client.js?v=pages-demo-1"></script>
+  <script type="module" src="app.js?v=pages-demo-1"></script>
+</body>
+</html>
