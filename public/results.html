@@ -14,9 +14,14 @@
   <header class="result-hero" id="top">
     <nav class="nav" aria-label="主要導覽">
       <a class="brand" href="./"><span>綠照</span>好時光</a>
-      <a href="./#works">參賽作品</a>
-      <a href="./#rules">投票辦法</a>
-      <a class="current" href="results.html" aria-current="page">票選結果</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="resultMenu" aria-label="開啟選單">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="nav-menu" id="resultMenu">
+        <a href="./#works">參賽作品</a>
+        <a href="./#rules">投票辦法</a>
+        <a class="current" href="results.html" aria-current="page">票選結果</a>
+      </div>
     </nav>
     <div class="result-hero-inner">
       <p class="eyebrow">綠色照顧短影音競賽</p>
@@ -73,6 +78,7 @@
     <div class="footer-item"><span>聯絡窗口</span><strong>049-2394-309　黃小姐</strong></div>
     <p class="footer-copyright">Copyright © 2025 All Rights Reserved.</p>
   </footer>
+  <script src="nav.js?v=mobile-menu-1"></script>
   <script src="api-client.js?v=pages-demo-1"></script>
   <script type="module" src="results.js?v=pages-demo-1"></script>
 </body>

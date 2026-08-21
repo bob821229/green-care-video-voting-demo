@@ -14,9 +14,14 @@
   <header class="hero">
     <nav class="nav" aria-label="主要導覽">
       <a class="brand" href="#top"><span>綠照</span>好時光</a>
-      <a href="#works">參賽作品</a>
-      <a href="#rules">投票辦法</a>
-      <a href="results.html">票選結果</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mainMenu" aria-label="開啟選單">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="nav-menu" id="mainMenu">
+        <a href="#works">參賽作品</a>
+        <a href="#rules">投票辦法</a>
+        <a href="results.html">票選結果</a>
+      </div>
     </nav>
     <div class="hero-inner" id="top">
       <p class="eyebrow">綠色照顧短影音競賽・網路人氣票選</p>
@@ -83,6 +88,7 @@
     <p class="footer-copyright">Copyright © 2025 All Rights Reserved.</p>
   </footer>
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="nav.js?v=mobile-menu-1"></script>
   <script src="api-client.js?v=pages-demo-1"></script>
   <script type="module" src="app.js?v=pages-demo-1"></script>
 </body>
