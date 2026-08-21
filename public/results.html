@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="result-hero">
+  <header class="result-hero" id="top">
     <nav class="nav" aria-label="主要導覽">
       <a class="brand" href="./"><span>綠照</span>好時光</a>
       <a href="./">首頁</a>
@@ -63,6 +63,10 @@
     </section>
   </main>
 
+  <a class="back-to-top" href="#top" aria-label="回到頁面頂端">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5"/></svg>
+    <span>回到頂端</span>
+  </a>
   <footer><p>主辦單位保留異常票數審核及最終結果認定之權利。</p><a href="./">返回首頁</a></footer>
   <script src="api-client.js?v=pages-demo-1"></script>
   <script type="module" src="results.js?v=pages-demo-1"></script>
