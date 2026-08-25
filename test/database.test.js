@@ -1,28 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDatabase } from '../db.js';
+import {createDatabase} from '../db.js';
 
-test('database enforces one vote per device', () => {
-  const db = createDatabase(':memory:');
-  const now = new Date().toISOString();
-  db.prepare('INSERT INTO devices(id,created_at,last_seen_at) VALUES(?,?,?)').run('device-1', now, now);
-  db.prepare('INSERT INTO watch_sessions(id,device_id,video_id,duration,last_ping_at,created_at,qualified_at) VALUES(?,?,?,?,?,?,?)').run('watch-1','device-1',1,100,Date.now(),now,now);
-  const insert = db.prepare('INSERT INTO votes(device_id,video_id,watch_session_id,ip_hash,risk_score,status,created_at) VALUES(?,?,?,?,?,?,?)');
-  insert.run('device-1',1,'watch-1','ip',0,'valid',now);
-  assert.throws(() => insert.run('device-1',2,'watch-1','ip',0,'valid',now), /UNIQUE/);
-  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM votes').get().count, 1);
-  db.close();
-});
+function fixture(){const db=createDatabase(':memory:'),now=new Date().toISOString();db.prepare('INSERT INTO devices(id,created_at,last_seen_at) VALUES(?,?,?)').run('device-1',now,now);for(let id=1;id<=4;id++)db.prepare('INSERT INTO watch_sessions(id,device_id,video_id,duration,watched_seconds,last_position,last_ping_at,qualified_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)').run(`watch-${id}`,'device-1',id,100,80,80,Date.now(),now,now);return {db,now}}
+const insert=db=>db.prepare('INSERT INTO votes(device_id,video_id,category,watch_session_id,ip_hash,risk_score,status,created_at) VALUES(?,?,?,?,?,?,?,?)');
 
-test('voiding a vote preserves it for audit', () => {
-  const db = createDatabase(':memory:');
-  const now = new Date().toISOString();
-  db.prepare('INSERT INTO devices(id,created_at,last_seen_at) VALUES(?,?,?)').run('device-1',now,now);
-  db.prepare('INSERT INTO watch_sessions(id,device_id,video_id,duration,last_ping_at,created_at) VALUES(?,?,?,?,?,?)').run('watch-1','device-1',1,100,Date.now(),now);
-  db.prepare('INSERT INTO votes(device_id,video_id,watch_session_id,ip_hash,risk_score,status,created_at) VALUES(?,?,?,?,?,?,?)').run('device-1',1,'watch-1','ip',80,'flagged',now);
-  db.prepare("UPDATE votes SET status='void',void_reason=? WHERE device_id=?").run('異常集中投票','device-1');
-  const vote=db.prepare('SELECT status,void_reason FROM votes WHERE device_id=?').get('device-1');
-  assert.deepEqual(vote,{status:'void',void_reason:'異常集中投票'});
-  db.close();
-});
-
+test('a device can hold two different active votes in a group',()=>{const {db,now}=fixture(),put=insert(db);put.run('device-1',1,'individual','watch-1','ip',0,'valid',now);put.run('device-1',2,'individual','watch-2','ip',0,'flagged',now);assert.equal(db.prepare("SELECT COUNT(*) count FROM votes WHERE status IN ('valid','flagged')").get().count,2);db.close()});
+test('same device cannot hold two active votes for the same work',()=>{const {db,now}=fixture(),put=insert(db);put.run('device-1',1,'individual','watch-1','ip',0,'valid',now);assert.throws(()=>put.run('device-1',1,'individual','watch-1','ip',0,'flagged',now),/UNIQUE/);db.close()});
+test('cancelled vote remains for audit and permits voting for that work again',()=>{const {db,now}=fixture(),put=insert(db);put.run('device-1',1,'individual','watch-1','ip',0,'valid',now);db.prepare("UPDATE votes SET status='cancelled',cancelled_at=? WHERE id=1").run(now);put.run('device-1',1,'individual','watch-1','ip',0,'valid',now);assert.equal(db.prepare('SELECT COUNT(*) count FROM votes').get().count,2);assert.equal(db.prepare("SELECT COUNT(*) count FROM votes WHERE status='valid'").get().count,1);db.close()});
+test('voiding a vote preserves reason',()=>{const {db,now}=fixture(),put=insert(db);put.run('device-1',1,'individual','watch-1','ip',80,'flagged',now);db.prepare("UPDATE votes SET status='void',void_reason=? WHERE id=1").run('異常集中投票');assert.deepEqual(db.prepare('SELECT status,void_reason FROM votes WHERE id=1').get(),{status:'void',void_reason:'異常集中投票'});db.close()});

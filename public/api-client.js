@@ -1,83 +1,24 @@
-const DEMO_STORAGE_KEY='green-care-voting-demo-v1';
-const isDemo=location.hostname.endsWith('.github.io')||new URLSearchParams(location.search).has('demo');
-
-const sessions=new Map();
-let videosPromise;
-
-function readStore(){
-  try{return JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY))||{progress:{},vote:null}}
-  catch{return {progress:{},vote:null}}
+const KEY='green-care-voting-demo-v2',isDemo=location.hostname.endsWith('.github.io')||new URLSearchParams(location.search).has('demo');
+const sessions=new Map();let videosPromise;
+const fresh=()=>({progress:{},votes:[],nextId:1});
+function read(){try{return {...fresh(),...JSON.parse(localStorage.getItem(KEY))}}catch{return fresh()}}
+const write=s=>localStorage.setItem(KEY,JSON.stringify(s));
+const body=o=>{try{return JSON.parse(o?.body||'{}')}catch{return {}}};
+const activity=()=>({state:'active',startsAt:'2026-10-12T10:00:00+08:00',endsAt:'2026-10-23T17:00:00+08:00'});
+const baseVotes=id=>180+((id*347+id*id*29)%1220);
+async function videos(){return videosPromise??=fetch('./mock-videos.json').then(r=>{if(!r.ok)throw Error('無法載入展示資料。');return r.json()}).then(items=>items.map(v=>({...v,category:v.category||(v.id<=15?'individual':'team')})))}
+function active(s){return s.votes.filter(v=>['valid','flagged'].includes(v.status))}
+function response(s,items){const votes=active(s),used={individual:0,team:0};votes.forEach(v=>used[v.category]++);return {videos:items,votes,progress:Object.entries(s.progress).map(([videoId,p])=>({videoId:Number(videoId),ratio:p.ratio||0,qualified:Boolean(p.qualified)})),limits:{individual:2,team:2},remaining:{individual:2-used.individual,team:2-used.team},activity:activity(),recaptchaSiteKey:'demo',demo:true}}
+function check(s,items,videoId,replaceId){const video=items.find(v=>v.id===Number(videoId));if(!video)throw Error('找不到這支作品。');const votes=active(s);if(votes.some(v=>v.videoId===video.id&&v.id!==replaceId))throw Error('你已經投過這支作品。');if(!s.progress[video.id]?.qualified)throw Error('請先有效觀看這支影片達 80%。');if(votes.filter(v=>v.category===video.category&&v.id!==replaceId).length>=2)throw Error('本組已使用兩票，請選擇要改投的作品。');return video}
+async function mockApi(url,options={}){const items=await videos(),s=read(),b=body(options),method=options.method||'GET';
+  if(url==='/api/bootstrap')return response(s,items);
+  if(url==='/api/watch/start'){const id=`demo-${Date.now()}-${b.videoId}`;sessions.set(id,{videoId:Number(b.videoId),duration:Number(b.duration)||1,lastPosition:0,lastAt:Date.now(),watched:0});return {sessionId:id}}
+  if(url==='/api/watch/progress'){const x=sessions.get(b.sessionId);if(!x)throw Error('展示觀看工作階段已失效，請重新開啟影片。');const now=Date.now(),wall=Math.max(0,Math.min((now-x.lastAt)/1000,8)),pos=Number(b.position),delta=pos-x.lastPosition,plausible=b.playing===true&&b.visible===true&&Number(b.playbackRate)>0&&Number(b.playbackRate)<=1.25&&delta>=0&&delta<=wall*1.6+1;x.watched=Math.min(x.duration,x.watched+(plausible?Math.min(wall,delta+.5):0));x.lastPosition=Number.isFinite(pos)?pos:x.lastPosition;x.lastAt=now;const old=s.progress[x.videoId]||{};const ratio=Math.max(old.ratio||0,x.watched/x.duration),qualified=old.qualified||ratio>=.8;s.progress[x.videoId]={ratio,qualified};write(s);return {ratio,qualified}}
+  if(url==='/api/votes'&&method==='POST'){if(b.recaptchaToken!=='demo-pass')throw Error('請完成展示驗證。');const video=check(s,items,b.videoId);const vote={id:s.nextId++,videoId:video.id,category:video.category,status:'valid',createdAt:new Date().toISOString()};s.votes.push(vote);write(s);return vote}
+  const replace=url.match(/^\/api\/votes\/(\d+)\/replace$/);if(replace){if(b.recaptchaToken!=='demo-pass')throw Error('請完成展示驗證。');const old=active(s).find(v=>v.id===Number(replace[1]));if(!old)throw Error('找不到可改投的票。');const video=check(s,items,b.videoId,old.id);if(video.category!==old.category)throw Error('只能改投同一組別的作品。');const vote={id:s.nextId++,videoId:video.id,category:video.category,status:'valid',createdAt:new Date().toISOString()};s.votes.push(vote);old.status='cancelled';old.cancelledAt=new Date().toISOString();old.replacedByVoteId=vote.id;write(s);return vote}
+  const remove=url.match(/^\/api\/votes\/(\d+)$/);if(remove&&method==='DELETE'){const vote=active(s).find(v=>v.id===Number(remove[1]));if(!vote)throw Error('找不到可取消的票。');vote.status='cancelled';vote.cancelledAt=new Date().toISOString();write(s);return {ok:true}}
+  if(url==='/api/results'){const local=new Map(active(s).filter(v=>v.status==='valid').map(v=>[v.videoId,1]));const ranked=category=>items.filter(v=>v.category===category).map(v=>({...v,votes:baseVotes(v.id)+(local.get(v.id)||0)})).sort((a,b)=>b.votes-a.votes||a.id-b.id).map((v,i)=>({...v,rank:i+1}));return {published:false,live:true,generatedAt:new Date().toISOString(),activity:activity(),groups:{individual:ranked('individual'),team:ranked('team')},demo:true}}
+  throw Error('展示模式不支援此操作。');
 }
-
-function writeStore(store){localStorage.setItem(DEMO_STORAGE_KEY,JSON.stringify(store))}
-function requestBody(options){try{return JSON.parse(options?.body||'{}')}catch{return {}}}
-function activity(){return {state:'active',startsAt:'2026-01-01T00:00:00+08:00',endsAt:'2026-12-31T23:59:59+08:00'}}
-function mockVotes(id){return 180+((id*347+id*id*29)%1220)}
-
-async function loadVideos(){
-  videosPromise??=fetch('./mock-videos.json').then((response)=>{
-    if(!response.ok)throw new Error('無法載入展示資料。');
-    return response.json();
-  }).then((items)=>items.map((video)=>({...video,category:video.id<=15?'individual':'team'})));
-  return videosPromise;
-}
-
-async function mockApi(url,options={}){
-  const videos=await loadVideos();
-  const store=readStore();
-  const body=requestBody(options);
-
-  if(url==='/api/bootstrap'){
-    return {
-      videos,
-      vote:store.vote,
-      progress:Object.entries(store.progress).map(([videoId,ratio])=>({videoId:Number(videoId),ratio})),
-      activity:activity(),
-      turnstileSiteKey:'',
-      demo:true
-    };
-  }
-
-  if(url==='/api/watch/start'){
-    const sessionId=`demo-${Date.now()}-${body.videoId}`;
-    sessions.set(sessionId,{videoId:Number(body.videoId),duration:Number(body.duration)||1});
-    return {sessionId};
-  }
-
-  if(url==='/api/watch/progress'){
-    const session=sessions.get(body.sessionId);
-    if(!session)throw new Error('展示觀看工作階段已失效，請重新開啟影片。');
-    const previous=Number(store.progress[session.videoId])||0;
-    const ratio=Math.max(previous,Math.min(1,(Number(body.position)||0)/session.duration));
-    store.progress[session.videoId]=ratio;
-    writeStore(store);
-    return {ratio,qualified:ratio>=.8};
-  }
-
-  if(url==='/api/vote'){
-    if(store.vote)throw new Error('此瀏覽器已完成展示投票。');
-    const session=sessions.get(body.sessionId);
-    if(!session||Number(store.progress[session.videoId])<.8)throw new Error('觀看進度尚未達 80%。');
-    store.vote={videoId:Number(body.videoId),status:'valid'};
-    writeStore(store);
-    return {status:'valid'};
-  }
-
-  if(url==='/api/results'){
-    const voteId=Number(store.vote?.videoId)||0;
-    const ranked=(category)=>videos.filter((video)=>video.category===category).map((video)=>({...video,votes:mockVotes(video.id)+(video.id===voteId?1:0)})).sort((a,b)=>b.votes-a.votes||a.id-b.id).map((video,index)=>({...video,rank:index+1}));
-    return {published:false,preview:true,generatedAt:new Date().toISOString(),activity:activity(),groups:{individual:ranked('individual'),team:ranked('team')},demo:true};
-  }
-
-  throw new Error('展示模式不支援此操作。');
-}
-
-async function api(url,options={}){
-  if(isDemo)return mockApi(url,options);
-  const response=await fetch(url,{...options,headers:{'content-type':'application/json',...(options.headers||{})}});
-  const body=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(body.error||body.message||'系統暫時無法處理。');
-  return body;
-}
-
+async function api(url,options={}){if(isDemo)return mockApi(url,options);const response=await fetch(url,{...options,headers:{'content-type':'application/json',...(options.headers||{})}}),result=await response.json().catch(()=>({}));if(!response.ok)throw Error(result.error||result.message||'系統暫時無法處理。');return result}
 window.votingApi={api,isDemo};

@@ -35,8 +35,8 @@
 
   <main class="results-main">
     <div id="previewNotice" class="preview-notice" hidden>
-      <strong>開發預覽</strong>
-      <span>目前顯示資料庫內的測試票數，正式環境不會在活動期間公開。</span>
+      <strong>即時排名</strong>
+      <span>即時排名非最終結果，以主辦單位公告為準。</span>
     </div>
     <section id="resultsUnavailable" class="results-unavailable" hidden>
       <p class="eyebrow">結果尚未公布</p>
@@ -56,8 +56,8 @@
       </div>
 
       <div class="ranking-heading">
-        <div><p class="eyebrow">正式排名</p><h2 id="rankingTitle">個人組票選結果</h2></div>
-        <p>票數已排除待確認及作廢紀錄。</p>
+        <div><p class="eyebrow">即時排名</p><h2 id="rankingTitle">個人組票選結果</h2></div>
+        <p>僅統計有效票；每 30 秒更新。<br>最後更新：<time id="resultsUpdated">讀取中</time></p>
       </div>
       <div id="rankingPanel" role="tabpanel" aria-labelledby="resultIndividualTab">
         <div id="topResults" class="top-results"></div>
@@ -79,7 +79,7 @@
     <p class="footer-copyright">Copyright © 2025 All Rights Reserved.</p>
   </footer>
   <script src="nav.js?v=mobile-menu-1"></script>
-  <script src="api-client.js?v=pages-demo-1"></script>
-  <script type="module" src="results.js?v=pages-demo-1"></script>
+  <script src="api-client.js?v=four-vote-1"></script>
+  <script type="module" src="results.js?v=live-results-1"></script>
 </body>
 </html>

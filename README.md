@@ -20,7 +20,7 @@ npm run build:pages
 4. Node.js 不會自動讀取 `.env`；開發時可用 PowerShell 設定環境變數，或用部署平台的環境變數功能。
 5. 執行 `npm run dev`，開啟 `http://localhost:3000`。
 
-未設定 Turnstile 時僅允許非 production 模式投票；正式環境必須設定 `TURNSTILE_SITE_KEY` 與 `TURNSTILE_SECRET_KEY`。
+正式環境必須設定 `RECAPTCHA_SITE_KEY`、`RECAPTCHA_SECRET_KEY` 與 `RECAPTCHA_EXPECTED_HOSTNAME`。前端只取得一次性 token，投票與改投均由後端向 Google 驗證；取消投票不要求再次驗證。
 
 ### 重設本機測試投票
 
@@ -44,7 +44,7 @@ npm run build:pages
 
 ## 票選結果頁
 
-開啟 `/results.html` 查看個人組及團體組排名。開發環境會顯示真實測試資料並標示為預覽；正式環境預設在活動截止後公開，也可在票數確認完成後設定 `RESULTS_PUBLISHED=1` 手動開放。排名只計算狀態為 `valid` 的票，待確認及作廢票不列入。
+開啟 `/results.html` 查看個人組及團體組即時排名。結果頁從活動開始常駐開放並每 30 秒更新，只計算狀態為 `valid` 的票；`flagged`、已取消及作廢票不列入。首頁同步顯示每組前 3 名摘要。
 
 ## 正式部署檢查
 

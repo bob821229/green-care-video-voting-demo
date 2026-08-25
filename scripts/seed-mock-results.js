@@ -22,7 +22,7 @@ const clearPreviousMocks = db.transaction(() => {
 
 const insertDevice = db.prepare('INSERT INTO devices(id,created_at,last_seen_at) VALUES(?,?,?)');
 const insertWatch = db.prepare('INSERT INTO watch_sessions(id,device_id,video_id,duration,watched_seconds,last_position,last_ping_at,qualified_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)');
-const insertVote = db.prepare('INSERT INTO votes(device_id,video_id,watch_session_id,ip_hash,device_signal_hash,risk_score,status,created_at) VALUES(?,?,?,?,?,?,?,?)');
+const insertVote = db.prepare('INSERT INTO votes(device_id,video_id,category,watch_session_id,ip_hash,device_signal_hash,risk_score,status,created_at) VALUES(?,?,?,?,?,?,?,?,?)');
 
 const totals = [];
 const seed = db.transaction(() => {
@@ -34,7 +34,7 @@ const seed = db.transaction(() => {
       const watchId = `mock-watch-${video.id}-${index}`;
       insertDevice.run(deviceId, now, now);
       insertWatch.run(watchId, deviceId, video.id, 60, 60, 60, Date.now(), now, now);
-      insertVote.run(deviceId, video.id, watchId, `mock-ip-${video.id}-${index}`, `mock-signal-${video.id}-${index}`, 0, 'valid', now);
+      insertVote.run(deviceId, video.id, video.id <= 15 ? 'individual' : 'team', watchId, `mock-ip-${video.id}-${index}`, `mock-signal-${video.id}-${index}`, 0, 'valid', now);
     }
   }
 });
