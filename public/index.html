@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=canva-layout-1">
 </head>
 <body>
   <header class="hero">
@@ -24,23 +24,19 @@
       </div>
     </nav>
     <div class="hero-inner" id="top">
-      <p class="eyebrow">綠色照顧短影音競賽・網路人氣票選</p>
-      <h1><span>綠照</span>好時光<small>看見每一段值得被記住的故事</small></h1>
-      <div class="hero-meta">
-        <p>觀看作品達 80% 即可投票；個人組與團體組各有 2 票，截止前可取消或改投。</p>
+      <p class="eyebrow">短影音競賽・網路人氣票選</p>
+      <h1><span>綠照</span>好時光</h1>
+      <p class="hero-period"><span>票選日期</span><strong>10/12 <small>10:00</small></strong><i aria-hidden="true"></i><strong>10/23 <small>17:00</small></strong></p>
+      <div class="hero-meta hero-cta">
+        <p><strong>30 支初賽入圍影片</strong><br>為你喜愛的作品投下一票！</p>
         <a class="primary-link" href="#works">開始觀賞</a>
       </div>
     </div>
   </header>
 
   <main>
-    <section class="status-bar" aria-live="polite">
-      <span id="activityStatus">讀取活動狀態中</span>
-      <span id="voteStatus">個人組 2/2・團體組 2/2</span>
-    </section>
-
     <section class="rules-brief" id="rules" aria-labelledby="rulesTitle">
-      <div class="rules-brief-heading"><p class="eyebrow">投票前先看</p><h2 id="rulesTitle">四件事，快速完成投票</h2></div>
+      <div class="rules-brief-heading"><p class="eyebrow">投票辦法</p><h2 id="rulesTitle">投票前，請先確認</h2></div>
       <ol>
         <li><strong>2＋2</strong><span>個人組、團體組<br>各有 2 票</span></li>
         <li><strong>80%</strong><span>有效觀看達門檻<br>才會開放投票</span></li>
@@ -52,16 +48,20 @@
 
     <section class="works" id="works">
       <div class="section-heading">
-        <div><p class="eyebrow">線上展映</p><h2>參賽作品</h2><p class="section-intro">選擇組別，觀看每一支入選作品。</p></div>
+        <div><p class="eyebrow">線上展映</p><h2>初賽入圍影片</h2><p class="section-intro">選擇組別，觀看每一支入圍作品。</p></div>
       </div>
       <div class="category-tabs" role="tablist" aria-label="參賽組別">
         <button id="individualTab" class="category-tab active" type="button" role="tab" aria-selected="true" aria-controls="videoGrid" data-category="individual">
-          <span>個人組</span><small>15 支參賽作品</small>
+          <span>個人組</span><small>15 支初賽入圍</small>
         </button>
         <button id="teamTab" class="category-tab" type="button" role="tab" aria-selected="false" aria-controls="videoGrid" data-category="team">
-          <span>團體組</span><small>15 支參賽作品</small>
+          <span>團體組</span><small>15 支初賽入圍</small>
         </button>
       </div>
+      <section class="status-bar" aria-live="polite">
+        <span id="activityStatus">讀取活動狀態中</span>
+        <span id="voteStatus">個人組 2/2・團體組 2/2</span>
+      </section>
       <div class="group-heading"><div><p id="groupTitle">個人組</p><span id="groupDescription">個人參賽作品</span></div><strong id="groupCount">共 15 支作品</strong></div>
       <div id="videoGrid" class="video-grid" role="tabpanel" aria-labelledby="individualTab" aria-live="polite"></div>
     </section>
