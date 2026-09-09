@@ -59,11 +59,7 @@
           <span>團體組</span><small>15 支初賽入圍</small>
         </button>
       </div>
-      <section class="status-bar" aria-live="polite">
-        <span id="activityStatus">讀取活動狀態中</span>
-        <span id="voteStatus">個人組 2/2・團體組 2/2</span>
-      </section>
-      <div class="group-heading"><div><p id="groupTitle">個人組</p><span id="groupDescription">個人參賽作品</span></div><strong id="groupCount">共 15 支作品</strong></div>
+      <div class="group-heading"><div><p id="groupTitle">個人組</p><span id="groupDescription">個人參賽作品</span></div><strong id="groupCount" aria-live="polite">已投 0 票 / 尚餘 2 票</strong></div>
       <div id="videoGrid" class="video-grid" role="tabpanel" aria-labelledby="individualTab" aria-live="polite"></div>
     </section>
 
@@ -100,6 +96,6 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="nav.js?v=mobile-menu-1"></script>
   <script src="api-client.js?v=four-vote-1"></script>
-  <script type="module" src="app.js?v=card-label-1"></script>
+  <script type="module" src="app.js?v=group-vote-status-1"></script>
 </body>
 </html>
