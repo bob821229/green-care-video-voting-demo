@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=ranking-column-order-1">
+  <link rel="stylesheet" href="styles.css?v=custom-confirm-1">
 </head>
 <body>
   <header class="hero">
@@ -70,6 +70,19 @@
     </section>
   </main>
 
+  <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="confirm-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></svg></div>
+    <div class="confirm-copy">
+      <p class="confirm-eyebrow">投票確認</p>
+      <h2 id="confirmTitle">確認投票</h2>
+      <p id="confirmMessage"></p>
+    </div>
+    <div class="confirm-actions">
+      <button id="confirmCancel" class="confirm-secondary" type="button">返回</button>
+      <button id="confirmAccept" class="confirm-primary" type="button">確認投票</button>
+    </div>
+  </dialog>
+
   <dialog id="watchDialog" class="watch-dialog">
     <button class="close" id="closeDialog" type="button" aria-label="關閉播放器"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <div class="player-wrap"><div id="youtubePlayer"></div><div id="unavailable" class="unavailable" hidden>影片尚未設定，請稍後再來。</div></div>
@@ -96,6 +109,6 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="nav.js?v=mobile-menu-1"></script>
   <script src="api-client.js?v=four-vote-1"></script>
-  <script type="module" src="app.js?v=canva-cards-1"></script>
+  <script type="module" src="app.js?v=custom-confirm-1"></script>
 </body>
 </html>
