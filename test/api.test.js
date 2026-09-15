@@ -17,8 +17,18 @@ test('vote API enforces quota and supports atomic replace and cancel',async()=>{
     assert.equal((await call('/api/votes','POST',{videoId:3})).status,409);
     assert.equal((await call(`/api/votes/${firstVote.id}/replace`,'POST',{videoId:3})).status,201);
     const active=db.prepare("SELECT video_id videoId FROM votes WHERE status IN ('valid','flagged') ORDER BY video_id").all().map(r=>r.videoId);assert.deepEqual(active,[2,3]);
+    const beforeCancel=await (await fetch(`${base}/api/results`)).json();assert.equal(beforeCancel.groups.individual.find(v=>v.id===2).votes,1);
     const second=db.prepare("SELECT id FROM votes WHERE video_id=2 AND status='valid'").get();assert.equal((await call(`/api/votes/${second.id}`,'DELETE')).status,200);
+    const afterCancel=await (await fetch(`${base}/api/results`)).json();assert.equal(afterCancel.groups.individual.find(v=>v.id===2).votes,0);
     assert.equal(db.prepare("SELECT COUNT(*) count FROM votes WHERE status IN ('valid','flagged')").get().count,1);
     assert.equal(db.prepare("SELECT COUNT(*) count FROM votes WHERE status='cancelled'").get().count,2);
+    const startWatch=()=>call('/api/watch/start','POST',{videoId:4,duration:100});
+    const started=await (await startWatch()).json(),reused=await (await startWatch()).json();
+    assert.equal(started.reused,false);assert.equal(reused.reused,true);assert.equal(reused.sessionId,started.sessionId);
+    assert.equal(db.prepare('SELECT COUNT(*) count FROM watch_sessions WHERE video_id=4').get().count,1);
+    for(let i=2;i<12;i++)assert.equal((await startWatch()).status,200);
+    const limited=await startWatch();assert.equal(limited.status,429);assert.equal(limited.headers.get('retry-after'),'60');
+    const throttled=await call('/api/watch/progress','POST',{sessionId:started.sessionId,position:1,playbackRate:1,playing:true,visible:true});
+    assert.equal(throttled.status,200);assert.equal((await throttled.json()).throttled,true);
   }finally{await new Promise(resolve=>server.close(resolve));db.close();fs.rmSync(dir,{recursive:true,force:true})}
 });

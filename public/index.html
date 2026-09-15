@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=card-alignment-1">
+  <link rel="stylesheet" href="styles.css?v=mobile-footer-1">
 </head>
 <body>
-  <header class="hero">
+  <header class="hero" id="top">
     <nav class="nav" aria-label="主要導覽">
       <a class="brand" href="#top" aria-label="綠色照顧－回到首頁"><img class="brand-logo" src="images/logo.png" alt="綠色照顧"></a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mainMenu" aria-label="開啟選單">
@@ -23,7 +23,7 @@
         <a href="results.html">票選結果</a>
       </div>
     </nav>
-    <div class="hero-inner" id="top">
+    <div class="hero-inner">
       <p class="eyebrow"><span>短影音競賽</span><i aria-hidden="true">・</i><strong>網路人氣票選</strong></p>
       <h1><span>綠照</span><em>好</em><span>時光</span></h1>
       <p class="hero-period"><span>票選日期</span><i aria-hidden="true"></i><strong>10/12 <small>10:00</small></strong><b aria-hidden="true"></b><strong>10/23 <small>17:00</small></strong></p>
@@ -87,13 +87,17 @@
     <button class="close" id="closeDialog" type="button" aria-label="關閉播放器"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <div class="player-wrap"><div id="youtubePlayer"></div><div id="unavailable" class="unavailable" hidden>影片尚未設定，請稍後再來。</div></div>
     <div class="watch-info">
-      <div><p id="dialogNumber" class="eyebrow"></p><h2 id="dialogTitle"></h2><p id="dialogTeam"></p></div>
+      <div class="watch-heading"><p id="dialogNumber" class="eyebrow"></p><h2 id="dialogTitle"></h2><p id="dialogTeam"></p></div>
       <div class="progress-block"><div class="progress-label"><span>有效觀看進度</span><strong id="progressText">0%</strong></div><div class="progress"><span id="progressBar"></span></div><p id="progressHint">觀看達 80% 後即可投票。快轉及背景播放不列入進度。</p></div>
       <div id="replacePanel" class="replace-panel" hidden><strong>本組已投滿，請選擇要替換的票：</strong><div id="replaceChoices"></div></div>
       <div id="recaptchaBox" class="recaptcha-box"></div>
       <button id="voteButton" class="vote-button" disabled>尚未達投票門檻</button>
       <button id="cancelVoteButton" class="cancel-vote-button" type="button" hidden>取消這一票</button>
       <p id="dialogMessage" class="message" role="status"></p>
+      <nav class="video-pagination" aria-label="切換參賽影片">
+        <button id="previousVideo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>上一部</span></button>
+        <button id="nextVideo" type="button"><span>下一部</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+      </nav>
     </div>
   </dialog>
 
@@ -107,8 +111,8 @@
     <p class="footer-copyright">Copyright © 2026 All Rights Reserved.</p>
   </footer>
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="nav.js?v=mobile-menu-1"></script>
+  <script src="nav.js?v=true-top-1"></script>
   <script src="api-client.js?v=four-vote-1"></script>
-  <script type="module" src="app.js?v=custom-confirm-1"></script>
+  <script type="module" src="app.js?v=watch-hardening-1"></script>
 </body>
 </html>

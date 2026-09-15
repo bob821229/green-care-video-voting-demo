@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=card-alignment-1">
+  <link rel="stylesheet" href="styles.css?v=mobile-footer-1">
 </head>
 <body>
   <header class="result-hero" id="top">
@@ -46,25 +46,27 @@
       <a class="primary-link" href="./">返回投票首頁</a>
     </section>
 
-    <section id="resultsContent" hidden>
-      <div class="category-tabs result-tabs" role="tablist" aria-label="票選結果組別">
-        <button id="resultIndividualTab" class="category-tab active" type="button" role="tab" aria-selected="true" aria-controls="rankingPanel" data-category="individual">
-          <span>個人組</span><small>15 支參賽作品</small>
-        </button>
-        <button id="resultTeamTab" class="category-tab" type="button" role="tab" aria-selected="false" aria-controls="rankingPanel" data-category="team">
-          <span>團體組</span><small>15 支參賽作品</small>
-        </button>
+    <section id="resultsContent" class="final-results" hidden>
+      <div class="final-results-heading">
+        <h2 id="resultsPageHeading">票選結果</h2>
+        <p>僅統計有效票；每 30 秒更新<br>最後更新：<time id="resultsUpdated">讀取中</time></p>
       </div>
-
-      <div class="ranking-heading">
-        <div><p class="eyebrow">即時排名</p><h2 id="rankingTitle">個人組票選結果</h2></div>
-        <p>僅統計有效票；每 30 秒更新。<br>最後更新：<time id="resultsUpdated">讀取中</time></p>
-      </div>
-      <div id="rankingPanel" role="tabpanel" aria-labelledby="resultIndividualTab">
-        <div id="topResults" class="top-results"></div>
-        <section class="other-results" aria-labelledby="otherResultsTitle">
-          <h3 id="otherResultsTitle">其他作品排名</h3>
-          <ol id="otherResultsList" class="ranking-list"></ol>
+      <div class="final-results-columns">
+        <section class="final-group final-group-individual" aria-labelledby="individualResultTitle">
+          <h3 id="individualResultTitle" class="visually-hidden">個人組票選結果</h3>
+          <div id="individualWinner"></div>
+          <div class="final-ranking-table">
+            <div class="final-ranking-head" aria-hidden="true"><span>名次</span><span>作品</span><span>票數</span></div>
+            <ol id="individualRanking"></ol>
+          </div>
+        </section>
+        <section class="final-group final-group-team" aria-labelledby="teamResultTitle">
+          <h3 id="teamResultTitle" class="visually-hidden">團體組票選結果</h3>
+          <div id="teamWinner"></div>
+          <div class="final-ranking-table">
+            <div class="final-ranking-head" aria-hidden="true"><span>名次</span><span>作品</span><span>票數</span></div>
+            <ol id="teamRanking"></ol>
+          </div>
         </section>
       </div>
     </section>
@@ -79,8 +81,8 @@
     <div class="footer-item"><span>聯絡窗口</span><strong>049-2394-309　黃小姐</strong></div>
     <p class="footer-copyright">Copyright © 2026 All Rights Reserved.</p>
   </footer>
-  <script src="nav.js?v=mobile-menu-1"></script>
+  <script src="nav.js?v=true-top-1"></script>
   <script src="api-client.js?v=four-vote-1"></script>
-  <script type="module" src="results.js?v=results-home-style-1"></script>
+  <script type="module" src="results.js?v=ranking-links-1"></script>
 </body>
 </html>
