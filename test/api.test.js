@@ -30,5 +30,11 @@ test('vote API enforces quota and supports atomic replace and cancel',async()=>{
     const limited=await startWatch();assert.equal(limited.status,429);assert.equal(limited.headers.get('retry-after'),'60');
     const throttled=await call('/api/watch/progress','POST',{sessionId:started.sessionId,position:1,playbackRate:1,playing:true,visible:true});
     assert.equal(throttled.status,200);assert.equal((await throttled.json()).throttled,true);
+    db.prepare('UPDATE watch_sessions SET last_position=0,last_ping_at=? WHERE video_id=4').run(Date.now()-1000);
+    const transition=await call('/api/watch/progress','POST',{sessionId:started.sessionId,position:1,playbackRate:1,playing:true,visible:true,event:'transition'}),transitionBody=await transition.json();
+    assert.equal(transition.status,200);assert.equal(transitionBody.throttled,undefined);assert.ok(transitionBody.ratio>0);
+    db.prepare('UPDATE watch_sessions SET watched_seconds=40,last_position=70,last_ping_at=? WHERE video_id=4').run(Date.now()-5000);
+    const restartedProgress=await call('/api/watch/progress','POST',{sessionId:started.sessionId,position:2,playbackRate:1,playing:true,visible:true}),restartBody=await restartedProgress.json();
+    assert.equal(restartedProgress.status,200);assert.equal(restartBody.restarted,true);assert.equal(restartBody.ratio,.4);
   }finally{await new Promise(resolve=>server.close(resolve));db.close();fs.rmSync(dir,{recursive:true,force:true})}
 });

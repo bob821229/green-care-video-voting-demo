@@ -3,13 +3,15 @@
 // 'provided' = 優先使用 videos.json 的 poster，未提供時自動退回 YouTube 封面
 window.siteConfig = {
   posterSource: 'youtube',
-  youtubePosterQuality: 'maxresdefault'
+  winnerPosterSource: 'provided',
+  youtubePosterQuality: 'maxresdefault',
+  workSubtitle: '新北市淡水區忠寮社區'
 };
 
 const youtubePoster=(videoId,quality)=>`https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/${quality}.jpg`;
 window.posterTools={
-  forVideo(video){
-    if(window.siteConfig.posterSource==='provided'&&video.poster)return {src:video.poster,stage:'provided'};
+  forVideo(video,source=window.siteConfig.posterSource){
+    if(source==='provided'&&video.poster)return {src:video.poster,stage:'provided'};
     return {src:youtubePoster(video.youtubeId,window.siteConfig.youtubePosterQuality),stage:window.siteConfig.youtubePosterQuality};
   },
   fallback(event){
