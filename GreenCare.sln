@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{77C90B30-A085-43F7-BAEE-C65CA3EE6ABA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GreenCare.Api", "src\GreenCare.Api\GreenCare.Api.csproj", "{BAF252BE-7FEC-4886-8E92-9F7AC318F6F4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1D2423C4-F3A1-4EDA-9014-EC97703456EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GreenCare.Api.Tests", "tests\GreenCare.Api.Tests\GreenCare.Api.Tests.csproj", "{FC5BACCF-E5ED-4C3A-920E-B5AAA76362F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BAF252BE-7FEC-4886-8E92-9F7AC318F6F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAF252BE-7FEC-4886-8E92-9F7AC318F6F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAF252BE-7FEC-4886-8E92-9F7AC318F6F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAF252BE-7FEC-4886-8E92-9F7AC318F6F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC5BACCF-E5ED-4C3A-920E-B5AAA76362F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC5BACCF-E5ED-4C3A-920E-B5AAA76362F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC5BACCF-E5ED-4C3A-920E-B5AAA76362F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC5BACCF-E5ED-4C3A-920E-B5AAA76362F3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BAF252BE-7FEC-4886-8E92-9F7AC318F6F4} = {77C90B30-A085-43F7-BAEE-C65CA3EE6ABA}
+		{FC5BACCF-E5ED-4C3A-920E-B5AAA76362F3} = {1D2423C4-F3A1-4EDA-9014-EC97703456EC}
+	EndGlobalSection
+EndGlobal

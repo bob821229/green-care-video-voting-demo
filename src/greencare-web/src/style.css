@@ -1,0 +1,84 @@
+:root {
+  color: #176735;
+  background: #fde2d5;
+  font-family: Epilogue, "Noto Sans TC", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.migration-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 15% 20%, rgb(234 104 114 / 18%), transparent 32%),
+    linear-gradient(145deg, #fde2d5, #f4d7c7);
+}
+
+.migration-card {
+  width: min(760px, 100%);
+  padding: clamp(32px, 8vw, 72px);
+  border: 1px solid rgb(23 103 53 / 28%);
+  border-radius: 32px;
+  background: rgb(253 226 213 / 86%);
+  box-shadow: 0 24px 70px rgb(69 54 32 / 10%);
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: #176735;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+h1 {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: clamp(3.4rem, 12vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+}
+
+h1 em {
+  color: #ea6872;
+  font-style: normal;
+}
+
+.summary {
+  margin: 32px 0 0;
+  color: #243f2c;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+}
+
+.status {
+  display: inline-flex;
+  margin: 28px 0 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #176735;
+  color: #fde2d5;
+  font-size: 0.875rem;
+  font-weight: 800;
+}

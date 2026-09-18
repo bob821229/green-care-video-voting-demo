@@ -1,7 +1,11 @@
 node_modules/
+**/bin/
+**/obj/
 data/*.db
 data/*.db-*
 .env
 npm-debug.log*
 dist/
+artifacts/
+.local/
 .chrome-pages-test/

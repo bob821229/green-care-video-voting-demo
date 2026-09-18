@@ -1,8 +1,6 @@
 name: Deploy GitHub Pages demo
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -26,13 +24,20 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build:pages
+          cache-dependency-path: src/greencare-web/package-lock.json
+      - name: Install Vue dependencies
+        run: npm ci
+        working-directory: src/greencare-web
+      - name: Test Vue demo
+        run: npm test
+        working-directory: src/greencare-web
+      - name: Build Vue demo
+        run: npm run build:pages
+        working-directory: src/greencare-web
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: src/greencare-web/dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
