@@ -7,6 +7,7 @@
 | 資料表 | 用途 | 主鍵與主要關聯 |
 |---|---|---|
 | `SchemaVersions` | 紀錄人工套用的 SQL 版本、時間與執行者 | `VersionNumber` |
+| `Videos` | 固定參賽作品目錄、組別、影片及顯示資訊 | `Id`；由 `WatchSessions`、`Votes` 參照 |
 | `Devices` | 匿名裝置識別與最後活動時間 | `Id` |
 | `WatchSessions` | 每個裝置對作品的觀看進度與資格 | `Id`；FK 至 `Devices` |
 | `Votes` | 投票、取消、改投與風險狀態 | `Id`；FK 至 `Devices`、`WatchSessions` 與被取代票 |
@@ -15,7 +16,8 @@
 
 ## 重要資料規則
 
-- 作品編號限定 `1` 至 `30`；`1` 至 `15` 為 `individual`，`16` 至 `30` 為 `team`。
+- `Videos` 固定包含作品 ID `1` 至 `30`；`1` 至 `15` 為 `individual`，`16` 至 `30` 為 `team`，每組顯示順序不得重複。
+- `WatchSessions.VideoId` 與 `Votes.VideoId` 均以可信任外鍵參照 `Videos.Id`。
 - 觀看秒數與播放位置不可為負，也不可超過影片長度。
 - 投票狀態限定 `valid`、`flagged`、`cancelled`、`void`。
 - 同一裝置對同一作品最多只能存在一張有效票；取消或作廢後才可再投。
@@ -32,4 +34,4 @@
 
 ## 權限模型
 
-`002_application_permissions.sql` 建立 `GreenCareAppRole`。角色可對五個業務資料表執行 `SELECT`、`INSERT`、`UPDATE`、`DELETE`，可讀取 `SchemaVersions`，但被拒絕變更 `dbo` schema。正式 application user 由部署人員依 `templates/add_application_user.sql` 手動加入角色，不授予 `db_owner`、`db_ddladmin` 或 `CREATE TABLE`。
+`002_application_permissions.sql` 建立 `GreenCareAppRole`。角色可對五個可寫業務資料表執行 `SELECT`、`INSERT`、`UPDATE`、`DELETE`，可讀取 `SchemaVersions`；`003_video_catalog.sql` 另授予 `Videos` 唯讀權限。角色被拒絕變更 `dbo` schema。正式 application user 由部署人員依 `templates/add_application_user.sql` 手動加入角色，不授予 `db_owner`、`db_ddladmin` 或 `CREATE TABLE`。

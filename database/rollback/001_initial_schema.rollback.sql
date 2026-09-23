@@ -39,6 +39,7 @@ BEGIN TRY
     DROP TABLE IF EXISTS dbo.AuditLogs;
     DROP TABLE IF EXISTS dbo.Votes;
     DROP TABLE IF EXISTS dbo.WatchSessions;
+    DROP TABLE IF EXISTS dbo.Videos;
     DROP TABLE IF EXISTS dbo.Devices;
     DROP TABLE IF EXISTS dbo.SchemaVersions;
 

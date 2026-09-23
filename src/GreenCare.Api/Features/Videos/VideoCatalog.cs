@@ -1,4 +1,5 @@
-using System.Text.Json;
+using GreenCare.Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace GreenCare.Api.Features.Videos;
 
@@ -9,29 +10,27 @@ public sealed record VideoItem(int Id, string Number, string Title, string Team,
 
 public interface IVideoCatalog
 {
-    IReadOnlyList<VideoItem> All { get; }
-    bool Contains(int id);
-    VideoItem? Find(int id);
+    Task<IReadOnlyList<VideoItem>> GetAllAsync(CancellationToken cancellationToken);
+    Task<bool> ContainsAsync(int id, CancellationToken cancellationToken);
+    Task<VideoItem?> FindAsync(int id, CancellationToken cancellationToken);
 }
 
-public sealed class VideoCatalog : IVideoCatalog
+public sealed class VideoCatalog(GreenCareDbContext db) : IVideoCatalog
 {
-    private readonly Dictionary<int, VideoItem> _byId;
-    public IReadOnlyList<VideoItem> All { get; }
+    public async Task<IReadOnlyList<VideoItem>> GetAllAsync(CancellationToken cancellationToken) =>
+        await db.Videos.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Category)
+            .ThenBy(x => x.SortOrder)
+            .Select(x => new VideoItem(x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster))
+            .ToListAsync(cancellationToken);
 
-    public VideoCatalog()
-    {
-        var path = Path.Combine(AppContext.BaseDirectory, "videos.json");
-        var items = JsonSerializer.Deserialize<List<VideoItem>>(
-            File.ReadAllText(path),
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException("videos.json is empty.");
-        if (items.Count != 30 || items.Select(x => x.Id).Distinct().Count() != 30 || items.Any(x => x.Id is < 1 or > 30))
-            throw new InvalidOperationException("videos.json must contain unique video IDs 1 through 30.");
-        All = items.OrderBy(x => x.Id).ToArray();
-        _byId = All.ToDictionary(x => x.Id);
-    }
+    public Task<bool> ContainsAsync(int id, CancellationToken cancellationToken) =>
+        db.Videos.AsNoTracking().AnyAsync(x => x.Id == id && x.IsActive, cancellationToken);
 
-    public bool Contains(int id) => _byId.ContainsKey(id);
-    public VideoItem? Find(int id) => _byId.GetValueOrDefault(id);
+    public Task<VideoItem?> FindAsync(int id, CancellationToken cancellationToken) =>
+        db.Videos.AsNoTracking()
+            .Where(x => x.Id == id && x.IsActive)
+            .Select(x => new VideoItem(x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster))
+            .SingleOrDefaultAsync(cancellationToken);
 }

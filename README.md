@@ -2,7 +2,7 @@
 
 ## Vue／.NET 遷移骨架
 
-目前遷移分支已建立 Vue 3 + Vite、ASP.NET Core 8 與 EF Core 8 SQL Server 資料存取層，舊 Node.js 版本仍保留作為功能與畫面基準。
+目前遷移分支已建立 Vue 3 + Vite、ASP.NET Core 8 與 EF Core 8 SQL Server 資料存取層。根目錄的舊 Node.js／SQLite 版本暫時保留作為功能、畫面與回退基準；目前 GitHub Pages 與 IIS 發布流程均不使用它，待正式作品資料完成並進入第 14 步後再移除。
 
 資料庫 Schema 不由 EF Core 建立或升級。請先依序人工執行 `database/scripts`，再啟動 API；禁止使用 EF migrations、`Database.Migrate()` 或 `EnsureCreated()`。
 

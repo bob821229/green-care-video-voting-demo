@@ -147,12 +147,26 @@ public sealed class GreenCareDbContextIntegrationTests
         await using var context = CreateContext();
         var versions = await context.SchemaVersions
             .AsNoTracking()
-            .Where(x => x.VersionNumber == "001" || x.VersionNumber == "002")
+            .Where(x => x.VersionNumber == "001" || x.VersionNumber == "002" || x.VersionNumber == "003")
             .Select(x => x.VersionNumber)
             .ToListAsync();
 
         Assert.Contains("001", versions);
         Assert.Contains("002", versions);
+        Assert.Contains("003", versions);
+    }
+
+    [Fact]
+    public async Task Video_catalog_contains_the_seeded_thirty_entries()
+    {
+        await using var context = CreateContext();
+        var videos = await context.Videos.AsNoTracking().OrderBy(x => x.Id).ToListAsync();
+
+        Assert.Equal(30, videos.Count);
+        Assert.Equal(15, videos.Count(x => x.Category == VoteCategories.Individual));
+        Assert.Equal(15, videos.Count(x => x.Category == VoteCategories.Team));
+        Assert.Equal("01", videos[0].Number);
+        Assert.Equal("30", videos[^1].Number);
     }
 
     private static GreenCareDbContext CreateContext()

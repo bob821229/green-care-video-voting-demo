@@ -1,5 +1,7 @@
 # GreenCare Windows Server 2016／IIS 10 部署文件
 
+測試站與正式站的 AppSecret、Data Protection、IIS ACL 及 CAPTCHA 切換操作，另見 [測試與正式環境部署切換.md](./測試與正式環境部署切換.md)。
+
 ## 1. 部署架構
 
 - Windows Server 2016 x64 + IIS 10

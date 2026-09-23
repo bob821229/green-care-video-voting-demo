@@ -29,7 +29,8 @@ public static class ResultsEndpoints
                 .Select(group => new { VideoId = (int)group.Key, Count = group.Count() })
                 .ToListAsync(cancellationToken);
             var counts = rows.ToDictionary(x => x.VideoId, x => x.Count);
-            return ResultsBuilder.Build(videos.All, counts, activity.GetStatus(), timeProvider.GetUtcNow().UtcDateTime);
+            var catalog = await videos.GetAllAsync(cancellationToken);
+            return ResultsBuilder.Build(catalog, counts, activity.GetStatus(), timeProvider.GetUtcNow().UtcDateTime);
         }, cancellationToken);
         return Results.Ok(payload);
     }

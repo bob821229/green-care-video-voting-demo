@@ -32,7 +32,7 @@ public static class VotingEndpoints
         if (!await captcha.VerifyAsync(request.RecaptchaToken, context.Connection.RemoteIpAddress?.ToString(), cancellationToken))
             return Results.Json(new { error = "機器人驗證未通過，請重新勾選。" }, statusCode: StatusCodes.Status403Forbidden);
 
-        var video = catalog.Find(request.VideoId);
+        var video = await catalog.FindAsync(request.VideoId, cancellationToken);
         if (video is null) return Results.Json(new { error = "找不到這支作品。" }, statusCode: StatusCodes.Status409Conflict);
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var risk = await riskService.EvaluateAsync(deviceId, context.Connection.RemoteIpAddress?.ToString(), request.DeviceSignal, now, cancellationToken);

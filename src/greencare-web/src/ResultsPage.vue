@@ -29,9 +29,10 @@ onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
     </nav>
     <div class="result-art-stage">
       <div class="result-hero-inner">
-        <p class="eyebrow"><span>短影音競賽</span><i aria-hidden="true">・</i><strong>網路人氣票選</strong></p>
-        <h1><span>綠照</span><em>好</em><span>時光</span></h1>
-        <p class="result-title-subtitle">網路人氣票選結果</p>
+        <picture class="result-official-art" aria-hidden="true">
+          <img :src="assetPath('assets/campaign/banner/hero-desktop-title.svg')" alt="">
+        </picture>
+        <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選結果</h1>
         <div class="result-summary"><p>{{data?lead:'正在讀取票選結果。'}}</p><p v-if="data">投票期間：{{formatDateTime(data.activity.startsAt)}}－{{formatDateTime(data.activity.endsAt)}}</p></div>
       </div>
     </div>

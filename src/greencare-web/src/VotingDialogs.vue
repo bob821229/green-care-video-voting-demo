@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { api } from './api'
 import type { Bootstrap, Video, Vote, WatchProgress } from './types'
 
@@ -13,6 +13,7 @@ const watchDialog=ref<HTMLDialogElement>(),confirmDialog=ref<HTMLDialogElement>(
 const current=ref<Video|null>(null),player=ref<any>(null),playerState=ref<number|null>(null),sessionId=ref(''),timer=ref<number>(),captchaToken=ref(''),captchaId=ref<number|null>(null),busy=ref(false),message=ref(''),messageError=ref(false)
 const confirmTitle=ref(''),confirmMessage=ref(''),confirmText=ref('確認'),confirmTone=ref('vote')
 let confirmationResolve:((answer:boolean)=>void)|null=null
+let captchaLoadPromise:Promise<void>|null=null
 
 const groupName=computed(()=>current.value?.category==='team'?'團體組':'個人組')
 const currentVote=computed(()=>current.value?props.data.votes.find(v=>v.videoId===current.value!.id):undefined)
@@ -21,6 +22,7 @@ const qualified=computed(()=>ratio.value>=.8||Boolean(current.value&&props.data.
 const groupVotes=computed(()=>current.value?props.data.votes.filter(v=>v.category===current.value!.category):[])
 const groupFull=computed(()=>!currentVote.value&&groupVotes.value.length>=2)
 const showCaptcha=computed(()=>!currentVote.value&&!groupFull.value&&qualified.value&&props.data.activity.state==='active')
+const captchaVisible=computed(()=>!props.data.recaptchaSiteKey||captchaId.value!==null)
 const videosInGroup=computed(()=>props.data.videos.filter(v=>v.category===current.value?.category))
 const currentIndex=computed(()=>videosInGroup.value.findIndex(v=>v.id===current.value?.id))
 const canVote=computed(()=>!busy.value&&!currentVote.value&&!groupFull.value&&Boolean(current.value?.youtubeId)&&qualified.value&&props.data.activity.state==='active')
@@ -44,7 +46,7 @@ async function onPlayerReady(){try{const result=await api<{sessionId:string}>('/
 function onPlayerState(event:{data:number}){const previous=playerState.value;playerState.value=event.data;clearTimer();if(event.data===window.YT.PlayerState.PLAYING)timer.value=window.setInterval(()=>sendProgress('tick',true),5000);else if(previous===window.YT.PlayerState.PLAYING)void sendProgress('transition',true)}
 async function sendProgress(event='tick',playing?:boolean){if(!sessionId.value||!player.value?.getCurrentTime||!current.value)return;try{const update=await api<{ratio:number;qualified:boolean}>('/api/watch/progress',{method:'POST',body:JSON.stringify({sessionId:sessionId.value,position:player.value.getCurrentTime(),playbackRate:player.value.getPlaybackRate(),playing:playing??playerState.value===window.YT?.PlayerState?.PLAYING,visible:document.visibilityState==='visible',event})});const existing=props.data.progress.find(p=>p.videoId===current.value!.id);if(existing){existing.ratio=Math.max(existing.ratio,update.ratio);existing.qualified=Boolean(existing.qualified)||update.qualified}else props.data.progress.push({videoId:current.value.id,ratio:update.ratio,qualified:update.qualified});if(update.qualified&&!captchaToken.value){await nextTick();await setupCaptcha()}}catch(error){setMessage(error instanceof Error?error.message:'觀看進度更新失敗。',true)}}
 function clearTimer(){if(timer.value)window.clearInterval(timer.value);timer.value=undefined}
-function resetCaptcha(){captchaToken.value='';if(captchaId.value!==null)window.grecaptcha?.reset(captchaId.value);if(developmentCaptchaInput.value)developmentCaptchaInput.value.checked=false}
+function resetCaptcha(){captchaToken.value='';if(captchaId.value!==null)window.grecaptcha?.enterprise?.reset(captchaId.value);if(developmentCaptchaInput.value)developmentCaptchaInput.value.checked=false}
 
 async function open(videoId:number){const video=props.data.videos.find(v=>v.id===videoId);if(!video)return;clearTimer();player.value?.destroy?.();resetCaptcha();current.value=video;sessionId.value='';playerState.value=null;message.value='';syncUrl(video.id);watchDialog.value?.showModal();await nextTick();if(showCaptcha.value)await setupCaptcha();void createPlayer(video)}
 async function navigate(offset:number){const target=videosInGroup.value[currentIndex.value+offset];if(!target)return;if(playerState.value===window.YT?.PlayerState?.PLAYING)await sendProgress('transition',true);await open(target.id)}
@@ -53,10 +55,24 @@ function close(){clearTimer();if(playerState.value===window.YT?.PlayerState?.PLA
 async function setupCaptcha(){
   captchaToken.value=''
   if(!props.data.recaptchaSiteKey)return
-  if(captchaId.value!==null){window.grecaptcha?.reset(captchaId.value);return}
-  if(!window.grecaptcha){await new Promise<void>((resolve,reject)=>{window.onRecaptchaReady=resolve;const script=document.createElement('script');script.src='https://www.google.com/recaptcha/api.js?onload=onRecaptchaReady&render=explicit';script.async=true;script.defer=true;script.onerror=()=>reject(new Error('驗證元件載入失敗。'));document.head.appendChild(script)}).catch(error=>setMessage(error instanceof Error?error.message:'驗證元件載入失敗。',true))}
-  if(window.grecaptcha&&captchaBox.value)captchaId.value=window.grecaptcha.render(captchaBox.value,{sitekey:props.data.recaptchaSiteKey,callback:(token:string)=>captchaToken.value=token,'expired-callback':()=>captchaToken.value=''})
+  if(captchaId.value!==null){window.grecaptcha?.enterprise?.reset(captchaId.value);return}
+  if(!window.grecaptcha?.enterprise&&!captchaLoadPromise){
+    captchaLoadPromise=new Promise<void>((resolve,reject)=>{
+      const timeout=window.setTimeout(()=>reject(new Error('驗證元件載入逾時，請重新整理後再試。')),15000)
+      window.onRecaptchaReady=()=>{window.clearTimeout(timeout);resolve()}
+      const script=document.createElement('script')
+      script.src='https://www.google.com/recaptcha/enterprise.js?onload=onRecaptchaReady&render=explicit'
+      script.dataset.recaptchaApi='true'
+      script.async=true
+      script.defer=true
+      script.onerror=()=>{window.clearTimeout(timeout);script.remove();reject(new Error('驗證元件載入失敗。'))}
+      document.head.appendChild(script)
+    })
+  }
+  try{await captchaLoadPromise}catch(error){captchaLoadPromise=null;setMessage(error instanceof Error?error.message:'驗證元件載入失敗。',true);return}
+  if(window.grecaptcha?.enterprise&&captchaBox.value&&captchaId.value===null)captchaId.value=window.grecaptcha.enterprise.render(captchaBox.value,{sitekey:props.data.recaptchaSiteKey,action:'vote',callback:(token:string)=>captchaToken.value=token,'expired-callback':()=>captchaToken.value=''})
 }
+watch(showCaptcha,async visible=>{if(visible){await nextTick();await setupCaptcha()}})
 function developmentCaptcha(checked:boolean){captchaToken.value=checked?'development-pass':''}
 function askConfirmation(title:string,body:string,accept:string,tone='vote'){confirmTitle.value=title;confirmMessage.value=body;confirmText.value=accept;confirmTone.value=tone;confirmDialog.value?.showModal();return new Promise<boolean>(resolve=>confirmationResolve=resolve)}
 function finishConfirmation(answer:boolean){confirmDialog.value?.close();const resolve=confirmationResolve;confirmationResolve=null;resolve?.(answer)}
@@ -92,7 +108,7 @@ defineExpose({open})
       <div class="watch-heading"><p class="eyebrow">{{groupName}} {{current?.number}}</p><h2>{{current?.title}}</h2><p>新北市淡水區忠寮社區</p></div>
       <div class="progress-block"><div class="progress-label"><span>有效觀看進度</span><strong>{{progressPercent}}%</strong></div><div class="progress"><span :style="{width:`${progressPercent}%`}"></span></div><p>觀看達 80% 後即可投票。快轉及背景播放不列入進度。</p></div>
       <div v-if="groupFull" class="replace-panel"><strong>本組已投滿 2 票。請先前往已投票的作品，確認後取消其中一票：</strong><div><button v-for="vote in groupVotes" :key="vote.id" type="button" @click="open(vote.videoId)"><span>作品 {{voteWork(vote)?.number}}・{{voteWork(vote)?.title}}</span><em>前往查看</em></button></div></div>
-      <div v-show="showCaptcha" ref="captchaBox" class="recaptcha-box" :class="{'captcha-visible':!data.recaptchaSiteKey}"><label v-if="!data.recaptchaSiteKey" class="demo-captcha"><input ref="developmentCaptchaInput" type="checkbox" @change="developmentCaptcha(($event.target as HTMLInputElement).checked)"> <span><strong>{{data.demo?'展示版驗證':'本機開發驗證'}}</strong><small>正式環境將使用 reCAPTCHA</small></span></label></div>
+      <div v-show="showCaptcha" ref="captchaBox" class="recaptcha-box" :class="{'captcha-visible':captchaVisible}"><label v-if="!data.recaptchaSiteKey" class="demo-captcha"><input ref="developmentCaptchaInput" type="checkbox" @change="developmentCaptcha(($event.target as HTMLInputElement).checked)"> <span><strong>{{data.demo?'展示版驗證':'本機開發驗證'}}</strong><small>正式環境將使用 reCAPTCHA</small></span></label></div>
       <button class="vote-button" type="button" :disabled="!canVote" @click="submitVote">{{voteButtonText}}</button><button v-if="currentVote&&data.activity.state==='active'" class="cancel-vote-button" type="button" :disabled="busy" @click="cancelVote">取消這一票</button>
       <p class="message" :class="messageError?'error':'success'" role="status">{{message}}</p>
       <nav class="video-pagination" aria-label="切換參賽影片"><button type="button" :disabled="currentIndex<=0" @click="navigate(-1)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>上一部</span></button><button type="button" :disabled="currentIndex<0||currentIndex>=videosInGroup.length-1" @click="navigate(1)"><span>下一部</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></nav>

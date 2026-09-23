@@ -39,6 +39,11 @@ public sealed class WatchSessionConfiguration : IEntityTypeConfiguration<WatchSe
             .HasForeignKey(x => x.DeviceId)
             .OnDelete(DeleteBehavior.NoAction)
             .HasConstraintName("FK_WatchSessions_Devices_DeviceId");
+        builder.HasOne(x => x.Video)
+            .WithMany(x => x.WatchSessions)
+            .HasForeignKey(x => x.VideoId)
+            .OnDelete(DeleteBehavior.NoAction)
+            .HasConstraintName("FK_WatchSessions_Videos_VideoId");
 
         builder.HasIndex(x => new { x.DeviceId, x.VideoId }, "IX_WatchSessions_Device_Video")
             .IncludeProperties(x => new

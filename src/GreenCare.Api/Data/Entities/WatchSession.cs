@@ -13,5 +13,6 @@ public sealed class WatchSession
     public DateTime CreatedAtUtc { get; set; }
 
     public Device Device { get; set; } = null!;
+    public Video Video { get; set; } = null!;
     public ICollection<Vote> Votes { get; set; } = [];
 }

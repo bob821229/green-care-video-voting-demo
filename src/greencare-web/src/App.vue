@@ -34,7 +34,7 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
         <img :src="assetPath('assets/campaign/banner/hero-desktop-title.svg')" alt="">
       </picture>
       <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選，票選期間 10 月 12 日 10:00 至 10 月 23 日 17:00</h1>
-      <div class="hero-inner">
+      <div class="hero-inner hero-inner-hidden" aria-hidden="true">
         <div class="hero-meta hero-cta"><p><strong>30 支初賽入圍影片</strong><br>為你喜愛的作品投下一票！</p><a class="primary-link" href="#works">開始觀賞</a></div>
         <a class="hero-scroll" href="#rules" aria-label="查看投票辦法"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></a>
       </div>

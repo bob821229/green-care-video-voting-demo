@@ -14,7 +14,6 @@
   <ItemGroup>
     <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
     <Content Update="appsettings.Testing.json" CopyToPublishDirectory="Never" />
-    <Content Include="..\..\videos.json" Link="videos.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="BuildFrontend" BeforeTargets="ComputeFilesToPublish">

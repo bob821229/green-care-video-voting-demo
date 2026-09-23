@@ -13,6 +13,7 @@ public sealed class GreenCareModelTests
     public void Model_maps_all_tables_from_manual_schema()
     {
         AssertTable<SchemaVersion>("SchemaVersions");
+        AssertTable<Video>("Videos");
         AssertTable<Device>("Devices");
         AssertTable<WatchSession>("WatchSessions");
         AssertTable<Vote>("Votes");

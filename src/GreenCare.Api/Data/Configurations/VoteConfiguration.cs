@@ -60,6 +60,11 @@ public sealed class VoteConfiguration : IEntityTypeConfiguration<Vote>
             .HasForeignKey(x => x.DeviceId)
             .OnDelete(DeleteBehavior.NoAction)
             .HasConstraintName("FK_Votes_Devices_DeviceId");
+        builder.HasOne(x => x.Video)
+            .WithMany(x => x.Votes)
+            .HasForeignKey(x => x.VideoId)
+            .OnDelete(DeleteBehavior.NoAction)
+            .HasConstraintName("FK_Votes_Videos_VideoId");
         builder.HasOne(x => x.WatchSession)
             .WithMany(x => x.Votes)
             .HasForeignKey(x => x.WatchSessionId)

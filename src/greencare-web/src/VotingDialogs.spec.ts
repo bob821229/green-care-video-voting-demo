@@ -12,7 +12,7 @@ beforeAll(()=>{
 })
 
 describe('VotingDialogs',()=>{
-  afterEach(()=>vi.unstubAllGlobals())
+  afterEach(()=>{vi.unstubAllGlobals();delete window.grecaptcha;document.querySelectorAll('script[data-recaptcha-api]').forEach(script=>script.remove())})
   it('opens a qualified work with local captcha and an enabled vote action',async()=>{
     const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
     await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(1)
@@ -21,6 +21,18 @@ describe('VotingDialogs',()=>{
     expect(wrapper.get('.progress-label strong').text()).toBe('85%')
     expect(wrapper.get('.demo-captcha').text()).toContain('本機開發驗證')
     expect(wrapper.get('.vote-button').attributes('disabled')).toBeUndefined()
+  })
+
+  it('renders and reveals Google reCAPTCHA for a qualified production work',async()=>{
+    const data=structuredClone(base)
+    data.recaptchaSiteKey='production-site-key'
+    const render=vi.fn(()=>7)
+    window.grecaptcha={enterprise:{render,reset:vi.fn()}}
+    const wrapper=mount(VotingDialogs,{props:{data}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(1)
+    await flushPromises()
+    expect(render).toHaveBeenCalledWith(expect.any(HTMLElement),expect.objectContaining({sitekey:'production-site-key',action:'vote'}))
+    expect(wrapper.get('.recaptcha-box').classes()).toContain('captcha-visible')
   })
 
   it('requires visiting an existing vote before voting again when the group is full',async()=>{

@@ -19,6 +19,7 @@ public sealed class Vote
     public bool IsActive { get; private set; }
 
     public Device Device { get; set; } = null!;
+    public Video Video { get; set; } = null!;
     public WatchSession WatchSession { get; set; } = null!;
     public Vote? ReplacedByVote { get; set; }
     public ICollection<Vote> ReplacedVotes { get; set; } = [];

@@ -52,10 +52,11 @@ public static class PublicApiEndpoints
         var individualUsed = votes.Count(x => x.Category == VoteCategories.Individual);
         var teamUsed = votes.Count(x => x.Category == VoteCategories.Team);
         var activity = activityService.GetStatus();
+        var catalog = await videos.GetAllAsync(cancellationToken);
 
         return Results.Ok(new
         {
-            videos = videos.All.Select(x => new
+            videos = catalog.Select(x => new
             {
                 x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster, x.Category
             }),
@@ -87,7 +88,8 @@ public static class PublicApiEndpoints
     {
         var deviceId = await devices.GetOrCreateAsync(context, cancellationToken);
         if (!limiter.Allow("watch-start-device", deviceId.ToString("D"), 12)) return RateLimited(context);
-        if (!videos.Contains(request.VideoId) || !double.IsFinite(request.Duration) || request.Duration is < 10 or > 7200)
+        if (!await videos.ContainsAsync(request.VideoId, cancellationToken) ||
+            !double.IsFinite(request.Duration) || request.Duration is < 10 or > 7200)
             return Results.BadRequest(new { error = "影片資料不正確。" });
 
         var duration = (decimal)request.Duration;

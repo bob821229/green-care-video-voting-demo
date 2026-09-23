@@ -68,7 +68,7 @@ public static class BackendInfrastructureExtensions
         services.AddSingleton<ISignedTokenService, SignedTokenService>();
         services.AddSingleton<IRequestWindowLimiter, RequestWindowLimiter>();
         services.AddSingleton<IResultsCache, ResultsCache>();
-        services.AddSingleton<IVideoCatalog, VideoCatalog>();
+        services.AddScoped<IVideoCatalog, VideoCatalog>();
         services.AddScoped<IDeviceCookieService, DeviceCookieService>();
         services.AddScoped<IDeviceIdentityService, DeviceIdentityService>();
         services.AddScoped<IVoteRiskService, VoteRiskService>();

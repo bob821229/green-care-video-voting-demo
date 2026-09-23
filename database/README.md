@@ -15,6 +15,7 @@
 database/
   scripts/       依編號順序執行的正式異動腳本
   verify/        執行後驗證，不異動正式業務資料
+  reports/       唯讀的作品、票選結果及受控稽核匯出
   templates/     依環境填值後人工執行的範本
   rollback/      經核准後才可執行的破壞性回復腳本
 ```
@@ -27,12 +28,16 @@ database/
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q "CREATE DATABASE [GreenCare_Development]"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/scripts/001_initial_schema.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/scripts/002_application_permissions.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -f 65001 -i database/scripts/003_video_catalog.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/001_verify_schema.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/002_verify_permissions.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/003_verify_constraints.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/004_verify_video_catalog.sql
 ```
 
 `-b` 會讓 SQL 錯誤轉成非零結束碼，部署腳本不得省略。
+
+`003_video_catalog.sql` 含繁體中文 Demo 作品資料；使用 `sqlcmd` 時必須加上 `-f 65001`，明確以 UTF-8 讀取。使用 SSMS 開啟時也須確認檔案編碼為 UTF-8，避免作品名稱亂碼。
 
 ## 正式環境執行順序
 
@@ -61,6 +66,16 @@ sqlcmd -S "<server>" -d "<database>" -E -b `
 - 每份正式腳本必須在同一 transaction 內完成，使用 `SET XACT_ABORT ON`。
 - 若版本已存在，腳本須驗證必要物件仍存在後安全結束。
 - 若發現同名但非預期的物件，必須失敗，不得覆蓋。
+
+`003_video_catalog.sql` 會建立 `Videos`、匯入與目前 `videos.json` 相同的 30 筆 Demo 作品，並建立 `WatchSessions`／`Votes` 的作品外鍵。正式作品尚未確認前不得將 Demo 資料視為正式名單；正式名單須以後續版本化 SQL 人工置換並留下紀錄。
+
+## 活動結果匯出
+
+活動結束後依 [reports/README.md](./reports/README.md) 的凍結、備份、匯出與雜湊程序執行。一般業主結果使用 `003_vote_summary.sql`；`004`、`005` 含假名化識別與安全訊號，只能作受控內部稽核，不得作公開結果檔。
+
+## 正式作品置換
+
+取得正式作品後，依 [templates/README.md](./templates/README.md) 使用預設只演練、不寫入的置換範本。正式套用前必須確認觀看與投票資料皆為空。
 
 ## 回復
 
