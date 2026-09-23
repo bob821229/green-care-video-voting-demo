@@ -2,6 +2,8 @@
 
 These scripts are read-only reports. They do not update schema or business data.
 
+Traditional Chinese SSMS, CSV, Excel, reconciliation, and archive instructions are available in [`docs/票選資料匯出與Excel交付操作手冊.md`](../../docs/票選資料匯出與Excel交付操作手冊.md).
+
 ## Recommended final-export procedure
 
 1. Confirm the activity has ended.
