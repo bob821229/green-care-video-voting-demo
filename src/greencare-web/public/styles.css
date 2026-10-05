@@ -23,7 +23,7 @@
 
 /* Campaign visual system: 綠照好時光 */
 :root{--sand:#fde2d5;--oat:#f4d7c7;--sage:#a9bd92;--moss:#176735;--clay:#efaa91;--terra:#f0523e;--ochre:#ff8f1f;--ink:#243f2c;--radius:24px}
-html,body{overflow-x:clip}body{background:#fde2d5;color:var(--ink)}
+html,body{overflow-x:clip}body{background:#fbe7df;color:var(--ink)}
 .nav{position:relative;z-index:5;background:rgba(253,226,213,.9);border-bottom-color:rgba(23,103,53,.16);backdrop-filter:blur(12px)}
 .nav .brand{color:var(--terra);letter-spacing:.02em}.nav .brand span{color:var(--moss)}
 .nav a:not(.brand){font-weight:700}.nav a:hover{color:var(--terra)}
@@ -38,7 +38,7 @@ html,body{overflow-x:clip}body{background:#fde2d5;color:var(--ink)}
 .hero-meta{grid-template-columns:minmax(260px,560px) auto;align-items:center}
 .primary-link,.vote-button{background:var(--terra);color:#fff}.primary-link:hover,.vote-button:not(:disabled):hover{background:var(--moss)}
 .status-bar{margin-top:-22px;position:relative;z-index:4;background:var(--moss);color:#fff;box-shadow:0 12px 30px rgba(23,103,53,.2)}
-.works,.results-main{position:relative;background:#fde2d5}
+.works,.results-main{position:relative;background:#fbe7df}
 .works::before,.results-main::before{content:"";position:absolute;z-index:0;right:-80px;top:150px;width:310px;aspect-ratio:1;background:url('assets/campaign/flower-leaves.png') center/contain no-repeat;opacity:.18;pointer-events:none}
 .works>* ,.results-main>*{position:relative;z-index:1}
 .section-heading h2,.ranking-heading h2{color:var(--moss)}
@@ -469,8 +469,8 @@ body,
   --hero-half-height:clamp(180px,15.625vw,300px);
   --hero-content-width:clamp(320px,27vw,520px);
   min-height:0;
-  background:#fae3db;
-  border-radius:0 0 48px 48px
+  background:#fbe7df;
+  border-radius:0
 }
 .hero::before,
 .hero::after{content:none}
@@ -479,7 +479,7 @@ body,
   width:100%;
   height:clamp(360px,31.25vw,600px);
   overflow:hidden;
-  background:#fae3db url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
+  background:#fbe7df url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
 }
 .hero-official-art{
   position:absolute;
@@ -491,15 +491,15 @@ body,
   width:100%;
   height:100%;
   margin:0;
-  padding:clamp(18px,2.5vw,48px)
+  padding:8px
 }
 .hero-official-art source{display:none}
 .hero-official-art img{
   display:block;
-  width:min(var(--hero-content-width),100%);
+  width:min(65%,1119px);
   height:auto;
   max-width:100%;
-  max-height:100%;
+  max-height:calc(100% - 16px);
   object-fit:contain
 }
 .hero-inner{
@@ -537,6 +537,11 @@ body,
   .hero-art-stage{
     height:min(100vw,600px);
     background-image:url('assets/campaign/banner/hero-mobile-bg.png')
+  }
+  .hero-official-art{padding:12px}
+  .hero-official-art img{
+    width:min(68%,700px);
+    max-height:calc(100% - 24px)
   }
   .hero-inner{padding:10px 16px 8px}
   .hero-meta.hero-cta{
@@ -648,21 +653,21 @@ body,
 }
 
 /* Results use the exact same artwork stage and breakpoint as the home banner. */
-.result-hero{height:auto;min-height:0;overflow:visible;background:#fae3db;border-radius:0}
+.result-hero{height:auto;min-height:0;overflow:visible;background:#fbe7df;border-radius:0}
 .result-hero::before,.result-hero::after{content:none}
 .result-art-stage{
   position:relative;width:100%;height:clamp(360px,31.25vw,600px);overflow:hidden;
-  background:#fae3db url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
+  background:#fbe7df url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
 }
 .result-hero-inner{
   position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-  width:min(100%,1100px);height:100%;margin:auto;padding:12px 28px clamp(28px,3vw,42px);text-align:center
+  width:100%;max-width:none;height:100%;margin:auto;padding:12px 28px clamp(28px,3vw,42px);text-align:center
 }
 .result-official-art{
   display:flex;flex:1 1 auto;align-items:center;justify-content:center;min-width:0;min-height:0;width:100%;padding:8px 0
 }
 .result-official-art img{
-  display:block;width:min(clamp(320px,27vw,520px),100%);height:auto;max-width:100%;max-height:100%;object-fit:contain
+  display:block;width:min(65%,1119px);height:auto;max-width:100%;max-height:calc(100% - 16px);object-fit:contain
 }
 .result-hero-inner>.eyebrow{margin:0 0 5px;font-size:clamp(.78rem,1.25vw,1.1rem)}
 .result-hero h1{margin:0;font-size:clamp(3.3rem,6.2vw,7rem);line-height:.88}
@@ -680,6 +685,8 @@ body,
 
 @media(max-width:800px){
   .result-art-stage{height:min(100vw,600px);background-image:url('assets/campaign/banner/hero-mobile-bg.png')}
+  .result-official-art{padding:12px 0}
+  .result-official-art img{width:min(68%,700px);max-height:calc(100% - 24px)}
   .result-hero-inner{padding:10px 16px clamp(18px,5vw,28px)}
   .result-hero-inner>.eyebrow{margin-bottom:4px;font-size:clamp(.7rem,2.8vw,.95rem)}
   .result-hero h1{font-size:clamp(2.7rem,13.5vw,5.2rem)}
@@ -690,3 +697,119 @@ body,
 
 /* Temporarily hide the campaign CTA while preserving the official banner dimensions. */
 .hero-inner-hidden{display:none!important}
+
+/* Shared campaign type scale: display, heading, card, emphasis, body, small, caption. */
+:root{
+  --type-level-1:clamp(2.25rem,4vw,4rem);
+  --type-level-2:clamp(1.75rem,3vw,2.75rem);
+  --type-level-3:clamp(1.25rem,2.2vw,1.5rem);
+  --type-level-4:1.125rem;
+  --type-level-5:1rem;
+  --type-level-6:.875rem;
+  --type-level-7:.75rem;
+  --type-section:var(--type-level-1);
+  --type-card:var(--type-level-3);
+  --type-lead:var(--type-level-4);
+  --type-body:var(--type-level-5);
+  --type-sm:var(--type-level-6);
+  --type-xs:var(--type-level-7)
+}
+.rules-brief-heading h2,
+.works>.section-heading h2{font-size:var(--type-level-1)}
+.rules-brief li strong,
+.works-subtitle,
+.works .category-tab span,
+.group-heading p{font-size:var(--type-level-2)}
+.rules-brief li span,
+.works .video-number,
+.works .video-card h3,
+.summary-groups h3{font-size:var(--type-level-3)}
+.group-heading strong,
+.works .card-votes,
+.summary-list li>span,
+.summary-list li>em,
+.summary-list li>em b{font-size:var(--type-level-4)}
+.works .card-state{
+  font-size:var(--type-level-5)
+}
+.works .category-tab small,
+.group-heading span,
+.works .video-card .team{font-size:var(--type-level-6)}
+.works .group-heading>strong{font-size:var(--type-level-4)}
+.live-summary .primary-link{font-size:var(--type-level-6)}
+.summary-list li>strong{font-size:var(--type-level-2)}
+.footer-copyright{font-size:var(--type-level-7)}
+
+@media(max-width:600px){
+  :root{
+    --type-level-1:2.25rem;
+    --type-level-2:1.5rem;
+    --type-level-3:1.125rem;
+    --type-level-4:1rem
+  }
+  .summary-list li>span,
+  .summary-list li>em,
+  .summary-list li>em b{font-size:var(--type-level-3)}
+}
+
+/* Team entries use the established green campaign palette; dimensions stay shared. */
+.works .video-grid[data-category="team"] .video-card{background:#d8e7d7!important}
+.works .video-grid[data-category="team"] .video-number{background:#edf4eb;color:var(--moss)}
+.works .video-grid[data-category="team"] .video-card h3,
+.works .video-grid[data-category="team"] .card-votes{color:var(--moss)}
+.works .video-grid[data-category="team"] .video-card.voted{
+  border-color:var(--moss);
+  outline-color:var(--moss)
+}
+.works .video-grid[data-category="team"] .video-card.voted .card-state,
+.works .video-grid[data-category="team"] .video-card:not(.voted):hover .card-state,
+.works .video-grid[data-category="team"] .video-card:not(.voted):focus-visible .card-state{
+  background:var(--moss);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(23,103,53,.28)
+}
+
+/* Resting watch action uses the shared light campaign surface. */
+.works .card-state{background:#fff9f5}
+
+/* Results reuse the shared campaign type levels. */
+.final-results-heading h2{
+  font-family:Fraunces,serif;
+  font-size:var(--type-level-1);
+  font-weight:700;
+  line-height:1.65
+}
+.final-winner-award strong,
+.final-winner-copy>b{font-size:var(--type-level-2)}
+.final-winner-copy h4{font-size:var(--type-level-3)}
+.final-winner-copy>p,
+.final-ranking-table li>strong,
+.final-ranking-table li b{font-size:var(--type-level-5)}
+.final-results-heading p,
+.final-winner-award span,
+.final-winner-copy small,
+.final-winner-copy>b span,
+.final-ranking-table li>em{font-size:var(--type-level-6)}
+.final-ranking-head,
+.final-ranking-table li small{font-size:var(--type-level-7)}
+
+/* Video and vote-confirmation dialogs share the same campaign type scale. */
+.watch-heading .eyebrow{font-size:var(--type-level-4)}
+.watch-info h2{font-size:var(--type-level-2)}
+.watch-heading>p:last-child,
+.watch-info .progress-label,
+.watch-info .vote-button,
+.watch-info .cancel-vote-button,
+.video-pagination button,
+.replace-panel strong,
+.replace-panel button,
+.demo-captcha strong,
+.confirm-copy #confirmMessage,
+.confirm-actions button{font-size:var(--type-level-5)}
+.watch-info .progress-label strong{font-size:var(--type-level-2)}
+.watch-info .progress-block>p,
+.message,
+.replace-panel button em{font-size:var(--type-level-6)}
+.demo-captcha small,
+.confirm-eyebrow{font-size:var(--type-level-7)}
+.confirm-copy h2{font-size:var(--type-level-2)}

@@ -1,20 +1,26 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from './api'
 import { assetPath, homePath, resultsPath } from './paths'
-import type { Category, Results } from './types'
+import VotingDialogs from './VotingDialogs.vue'
+import type { Bootstrap, Category, Results } from './types'
 
-const data=ref<Results|null>(null),loadError=ref(''),menuOpen=ref(false)
+const data=ref<Results|null>(null),bootstrap=ref<Bootstrap|null>(null),loadError=ref(''),menuOpen=ref(false)
+const dialogs=ref<InstanceType<typeof VotingDialogs>>()
 let refreshTimer:number|undefined
-const heading=computed(()=>data.value?.live?'即時票選結果':'最終票選結果')
-const lead=computed(()=>data.value?.live?'目前顯示即時有效票數。':'投票已截止，結果仍須以主辦單位公告為準。')
+const heading=computed(()=>data.value?.live?'及時排名結果':'最終票選結果')
 const formatNumber=(value:number)=>value.toLocaleString('zh-TW')
 const formatDateTime=(value?:string)=>value?new Intl.DateTimeFormat('zh-TW',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Taipei'}).format(new Date(value)):'讀取中'
 const groupName=(category:Category)=>category==='individual'?'個人組':'團體組'
 const laurel=(category:Category)=>assetPath(`images/${category==='individual'?'laurel-individual':'laurel-team'}.svg`)
 const homeUrl=homePath(),resultsUrl=resultsPath()
-function workUrl(id:number){return homePath(id)}
-function openWork(id:number){location.href=workUrl(id)}
+async function openWork(id:number){
+  try{
+    if(!bootstrap.value){bootstrap.value=await api<Bootstrap>('/api/bootstrap');await nextTick()}
+    await dialogs.value?.open(id)
+  }catch(error){loadError.value=error instanceof Error?error.message:'作品資料暫時無法載入。'}
+}
+function updateBootstrap(value:Bootstrap){bootstrap.value=value}
 async function refresh(){try{data.value=await api<Results>('/api/results');loadError.value=''}catch(error){loadError.value=error instanceof Error?error.message:'票選結果暫時無法載入。'}}
 onMounted(async()=>{document.title='票選結果｜短片票選';await refresh();refreshTimer=window.setInterval(refresh,30000)})
 onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
@@ -27,21 +33,18 @@ onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
       <button class="nav-toggle" type="button" :aria-expanded="menuOpen" aria-controls="resultMenu" :aria-label="menuOpen?'關閉選單':'開啟選單'" @click="menuOpen=!menuOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div id="resultMenu" class="nav-menu" :class="{open:menuOpen}"><a :href="`${homeUrl}#works`">參賽作品</a><a :href="`${homeUrl}#rules`">投票辦法</a><a class="current" :href="resultsUrl" aria-current="page">票選結果</a></div>
     </nav>
-    <div class="result-art-stage">
-      <div class="result-hero-inner">
-        <picture class="result-official-art" aria-hidden="true">
-          <img :src="assetPath('assets/campaign/banner/hero-desktop-title.svg')" alt="">
-        </picture>
-        <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選結果</h1>
-        <div class="result-summary"><p>{{data?lead:'正在讀取票選結果。'}}</p><p v-if="data">投票期間：{{formatDateTime(data.activity.startsAt)}}－{{formatDateTime(data.activity.endsAt)}}</p></div>
-      </div>
+    <div class="hero-art-stage">
+      <picture class="hero-official-art" aria-hidden="true">
+        <source media="(max-width: 800px)" :srcset="assetPath('assets/campaign/banner/hero-mobile-title.svg')">
+        <img :src="assetPath('assets/campaign/banner/hero-desktop-title.svg')" alt="">
+      </picture>
+      <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選結果</h1>
     </div>
   </header>
 
   <main class="results-main">
     <section v-if="loadError" class="results-unavailable" role="alert"><p class="eyebrow">結果暫時無法載入</p><h2>請稍後再試</h2><p>{{loadError}}</p><a class="primary-link" href="/">返回投票首頁</a></section>
     <template v-else-if="data">
-      <div class="preview-notice"><strong>即時排名</strong><span>即時排名非最終結果，以主辦單位公告為準。</span></div>
       <section class="final-results" aria-labelledby="resultsPageHeading">
         <div class="final-results-heading"><h2 id="resultsPageHeading">{{heading}}</h2><p>僅統計有效票<br>最後更新：<time :datetime="data.generatedAt">{{formatDateTime(data.generatedAt)}}</time></p></div>
         <div class="final-results-columns">
@@ -57,6 +60,7 @@ onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
       </section>
     </template>
   </main>
+  <VotingDialogs v-if="bootstrap" ref="dialogs" :data="bootstrap" @updated="updateBootstrap" @results-changed="refresh" />
   <a class="back-to-top" href="#top" aria-label="回到頁面頂端"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5"/></svg></a>
   <footer class="site-footer"><div class="footer-item footer-organization"><span>主辦單位</span><img :src="assetPath('images/主辦單位.png')" alt="農業部農村發展及水土保持署"></div><div class="footer-item footer-organization"><span>執行單位</span><img :src="assetPath('images/執行單位.png')" alt="台灣水資源與農業研究院"></div><p class="footer-copyright">Copyright © 2026 All Rights Reserved.</p></footer>
 </template>

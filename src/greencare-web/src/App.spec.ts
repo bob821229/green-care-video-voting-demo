@@ -21,11 +21,13 @@ describe('App',()=>{
     expect(wrapper.findAll('.video-card')).toHaveLength(15)
     expect(wrapper.get('.video-card h3').text()).toBe('作品 1')
     expect(wrapper.get('.summary-list li>span').text()).toBe('作品 01・作品 1')
-    expect(wrapper.get('.summary-list li>em').text()).toBe('12票60.0%')
+    expect(wrapper.get('.summary-list li>em').text()).toBe('12票')
+    expect(wrapper.find('.summary-list li>em small').exists()).toBe(false)
     await wrapper.get('#teamTab').trigger('click')
     expect(wrapper.findAll('.video-card')).toHaveLength(15)
     expect(wrapper.get('.video-card h3').text()).toBe('作品 16')
     expect(wrapper.get('#teamTab').attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('#videoGrid').attributes('data-category')).toBe('team')
   })
 
   it('opens the mobile navigation with accessible state',async()=>{
