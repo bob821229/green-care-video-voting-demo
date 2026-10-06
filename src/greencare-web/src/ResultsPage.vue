@@ -8,7 +8,7 @@ import type { Bootstrap, Category, Results } from './types'
 const data=ref<Results|null>(null),bootstrap=ref<Bootstrap|null>(null),loadError=ref(''),menuOpen=ref(false)
 const dialogs=ref<InstanceType<typeof VotingDialogs>>()
 let refreshTimer:number|undefined
-const heading=computed(()=>data.value?.live?'及時排名結果':'最終票選結果')
+const heading=computed(()=>data.value?.live?'即時排名結果':'最終票選結果')
 const formatNumber=(value:number)=>value.toLocaleString('zh-TW')
 const formatDateTime=(value?:string)=>value?new Intl.DateTimeFormat('zh-TW',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Taipei'}).format(new Date(value)):'讀取中'
 const groupName=(category:Category)=>category==='individual'?'個人組':'團體組'
@@ -46,7 +46,7 @@ onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
     <section v-if="loadError" class="results-unavailable" role="alert"><p class="eyebrow">結果暫時無法載入</p><h2>請稍後再試</h2><p>{{loadError}}</p><a class="primary-link" href="/">返回投票首頁</a></section>
     <template v-else-if="data">
       <section class="final-results" aria-labelledby="resultsPageHeading">
-        <div class="final-results-heading"><h2 id="resultsPageHeading">{{heading}}</h2><p>僅統計有效票<br>最後更新：<time :datetime="data.generatedAt">{{formatDateTime(data.generatedAt)}}</time></p></div>
+        <div class="final-results-heading"><h2 id="resultsPageHeading">{{heading}}</h2><p>最後更新：<time :datetime="data.generatedAt">{{formatDateTime(data.generatedAt)}}</time><br>即時排名非最終結果，以主辦單位公告為準</p></div>
         <div class="final-results-columns">
           <section v-for="category in (['individual','team'] as Category[])" :key="category" class="final-group" :class="`final-group-${category}`" :aria-labelledby="`${category}ResultTitle`">
             <h3 :id="`${category}ResultTitle`" class="visually-hidden">{{groupName(category)}}票選結果</h3>

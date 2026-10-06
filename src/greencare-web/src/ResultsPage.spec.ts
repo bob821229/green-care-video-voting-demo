@@ -12,7 +12,7 @@ describe('ResultsPage',()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>results}))
     const wrapper=mount(ResultsPage)
     await flushPromises()
-    expect(wrapper.get('#resultsPageHeading').text()).toBe('及時排名結果')
+    expect(wrapper.get('#resultsPageHeading').text()).toBe('即時排名結果')
     expect(wrapper.findAll('.final-winner')).toHaveLength(2)
     expect(wrapper.findAll('.final-ranking-table li')).toHaveLength(28)
     expect(wrapper.find('.final-winner-copy h4').text()).toBe('作品 1')

@@ -41,7 +41,7 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
   <main>
     <section id="rules" class="rules-brief" aria-labelledby="rulesTitle">
       <div class="rules-brief-heading"><h2 id="rulesTitle">投票辦法</h2></div>
-      <ol><li><strong>每組2票</strong><span>個人組、團體組<br>各投2部</span></li><li><strong>觀看80%</strong><span>達到有效觀看門檻<br>才開始投票</span></li><li><strong>不重複</strong><span>同一作品<br>不能投兩票</span></li><li><strong>先取消</strong><span>前往原作品取消<br>再投其他作品</span></li></ol>
+      <ol><li><strong>每組2票</strong><span>個人組、團體組<br>各投2部</span></li><li><strong>觀看80%</strong><span>達到有效觀看門檻<br>才開始投票</span></li><li><strong>不重複</strong><span>同一作品<br>不能投兩票</span></li><li><strong>可改投</strong><span>前往原作品取消<br>再投其他作品</span></li></ol>
       <p>快轉、背景播放、暫停及異常倍速不列入有效觀看進度。</p>
     </section>
     <section id="works" class="works" aria-labelledby="worksTitle">
