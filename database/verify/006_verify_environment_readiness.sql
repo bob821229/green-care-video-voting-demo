@@ -24,7 +24,8 @@ IF OBJECT_ID(N'dbo.SchemaVersions', N'U') IS NULL
    OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '002')
    OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '003')
    OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '004')
-    THROW 50934, 'Schema versions 001, 002, 003, and 004 are required.', 1;
+   OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '005')
+    THROW 50934, 'Schema versions 001 through 005 are required.', 1;
 
 IF NOT EXISTS
 (
@@ -40,10 +41,10 @@ IF OBJECT_ID(N'dbo.Videos', N'U') IS NULL
    OR OBJECT_ID(N'dbo.FK_Votes_Videos_VideoId', N'F') IS NULL
     THROW 50935, 'Video catalog or trusted foreign keys are missing.', 1;
 
-IF (SELECT COUNT(*) FROM dbo.Videos) <> 30
-   OR (SELECT COUNT(*) FROM dbo.Videos WHERE Category = 'individual' AND IsActive = 1) <> 15
-   OR (SELECT COUNT(*) FROM dbo.Videos WHERE Category = 'team' AND IsActive = 1) <> 15
-    THROW 50936, 'Expected 30 active videos: 15 individual and 15 team.', 1;
+IF (SELECT COUNT(*) FROM dbo.Videos WHERE IsActive = 1) <> 27
+   OR (SELECT COUNT(*) FROM dbo.Videos WHERE Category = 'individual' AND IsActive = 1) <> 13
+   OR (SELECT COUNT(*) FROM dbo.Videos WHERE Category = 'team' AND IsActive = 1) <> 14
+    THROW 50936, 'Expected 27 active videos: 13 individual and 14 team.', 1;
 
 IF @RequireOfficialCatalog = 1
    AND EXISTS

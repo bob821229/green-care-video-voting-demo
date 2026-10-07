@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { demoApi } from './demoApi'
 import type { Bootstrap, Results, Vote } from './types'
 
-const videos=Array.from({length:30},(_,index)=>({id:index+1,number:String(index+1).padStart(2,'0'),title:`作品 ${index+1}`,team:`參賽者 ${index+1}`,youtubeId:'demo',poster:'images/posters/individual-demo.jpg'}))
+const videos=Array.from({length:27},(_,index)=>({id:index+1,number:String(index+1).padStart(2,'0'),title:`作品 ${index+1}`,team:`參賽者 ${index+1}`,youtubeId:'demo',poster:'images/posters/individual-demo.jpg'}))
 
 describe('GitHub Pages demo API',()=>{
   beforeEach(()=>{
@@ -10,10 +10,10 @@ describe('GitHub Pages demo API',()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>videos}))
   })
 
-  it('loads 30 works without a backend',async()=>{
+  it('loads 27 works without a backend',async()=>{
     const data=await demoApi<Bootstrap>('/api/bootstrap')
     expect(data.demo).toBe(true)
-    expect(data.videos).toHaveLength(30)
+    expect(data.videos).toHaveLength(27)
     expect(data.remaining).toEqual({individual:2,team:2})
   })
 

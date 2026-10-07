@@ -7,7 +7,7 @@
 | 資料表 | 用途 | 主鍵與主要關聯 |
 |---|---|---|
 | `SchemaVersions` | 紀錄人工套用的 SQL 版本、時間與執行者 | `VersionNumber` |
-| `Videos` | 固定參賽作品目錄、組別、影片及顯示資訊 | `Id`；由 `WatchSessions`、`Votes` 參照 |
+| `Videos` | 資料驅動的參賽作品目錄、組別、影片及顯示資訊 | `Id`；由 `WatchSessions`、`Votes` 參照 |
 | `Devices` | 匿名裝置識別與最後活動時間 | `Id` |
 | `WatchSessions` | 每個裝置對作品的觀看進度與資格 | `Id`；FK 至 `Devices` |
 | `Votes` | 投票、取消、改投與風險狀態 | `Id`；FK 至 `Devices`、`WatchSessions` 與被取代票 |
@@ -16,7 +16,7 @@
 
 ## 重要資料規則
 
-- `Videos` 固定包含作品 ID `1` 至 `30`；`1` 至 `15` 為 `individual`，`16` 至 `30` 為 `team`，每組顯示順序不得重複。
+- `Videos.Category` 是作品組別的唯一依據，`IsActive` 決定是否對外顯示，`SortOrder` 決定組內順序；作品數量與組別不可由 `Id` 推導。
 - `WatchSessions.VideoId` 與 `Votes.VideoId` 均以可信任外鍵參照 `Videos.Id`。
 - 觀看秒數與播放位置不可為負，也不可超過影片長度。
 - 投票狀態限定 `valid`、`flagged`、`cancelled`、`void`。

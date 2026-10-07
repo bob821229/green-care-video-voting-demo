@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import VotingDialogs from './VotingDialogs.vue'
 import type { Bootstrap, Video } from './types'
 
-const videos:Video[] = Array.from({length:30},(_,index)=>({id:index+1,number:String(index+1).padStart(2,'0'),title:`作品 ${index+1}`,team:`參賽者 ${index+1}`,youtubeId:'video',poster:'poster.jpg',category:index<15?'individual':'team'}))
+const videos:Video[] = Array.from({length:27},(_,index)=>({id:index+1,number:String(index+1).padStart(2,'0'),title:`作品 ${index+1}`,team:`參賽者 ${index+1}`,youtubeId:'video',poster:'poster.jpg',category:index<13?'individual':'team'}))
 const base:Bootstrap={videos,votes:[],progress:[{videoId:1,ratio:.85,qualified:true}],limits:{individual:2,team:2},remaining:{individual:2,team:2},allowVoteCancellation:false,activity:{state:'active',startsAt:'2026-01-01',endsAt:'2026-12-31'},recaptchaSiteKey:'',demo:false}
 
 beforeAll(()=>{

@@ -17,13 +17,13 @@ function loadState():DemoState{
 }
 function saveState(state:DemoState){localStorage.setItem(storageKey,JSON.stringify(state))}
 function body(init?:RequestInit){return init?.body?JSON.parse(String(init.body)) as Record<string,unknown>:{} }
-function category(videoId:number):Category{return videoId<=15?'individual':'team'}
+function category(videoId:number):Category{return videoId<=13?'individual':'team'}
 function remaining(state:DemoState,group:Category){return Math.max(0,2-state.votes.filter(v=>v.category===group).length)}
 
 async function videos(){
   videosPromise??=fetch(assetPath('mock-videos.json')).then(async response=>{
     if(!response.ok)throw new Error('Demo 作品資料載入失敗。')
-    return (await response.json() as Omit<Video,'category'>[]).map(video=>({...video,category:category(video.id)}))
+    return (await response.json() as Array<Omit<Video,'category'>&{category?:Category}>).map(video=>({...video,category:video.category??category(video.id)}))
   })
   return videosPromise
 }

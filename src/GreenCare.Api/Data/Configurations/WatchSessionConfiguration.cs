@@ -10,7 +10,6 @@ public sealed class WatchSessionConfiguration : IEntityTypeConfiguration<WatchSe
     {
         builder.ToTable("WatchSessions", "dbo", table =>
         {
-            table.HasCheckConstraint("CK_WatchSessions_VideoId", "[VideoId] BETWEEN 1 AND 30");
             table.HasCheckConstraint("CK_WatchSessions_Duration", "[DurationSeconds] BETWEEN 10 AND 7200");
             table.HasCheckConstraint(
                 "CK_WatchSessions_Watched",

@@ -157,16 +157,16 @@ public sealed class GreenCareDbContextIntegrationTests
     }
 
     [Fact]
-    public async Task Video_catalog_contains_the_seeded_thirty_entries()
+    public async Task Video_catalog_contains_the_official_active_entries()
     {
         await using var context = CreateContext();
         var videos = await context.Videos.AsNoTracking().OrderBy(x => x.Id).ToListAsync();
 
-        Assert.Equal(30, videos.Count);
-        Assert.Equal(15, videos.Count(x => x.Category == VoteCategories.Individual));
-        Assert.Equal(15, videos.Count(x => x.Category == VoteCategories.Team));
+        Assert.Equal(27, videos.Count(x => x.IsActive));
+        Assert.Equal(13, videos.Count(x => x.IsActive && x.Category == VoteCategories.Individual));
+        Assert.Equal(14, videos.Count(x => x.IsActive && x.Category == VoteCategories.Team));
         Assert.Equal("01", videos[0].Number);
-        Assert.Equal("30", videos[^1].Number);
+        Assert.Equal("27", videos.Last(x => x.IsActive).Number);
     }
 
     private static GreenCareDbContext CreateContext()

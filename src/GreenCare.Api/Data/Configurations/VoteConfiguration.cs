@@ -10,12 +10,7 @@ public sealed class VoteConfiguration : IEntityTypeConfiguration<Vote>
     {
         builder.ToTable("Votes", "dbo", table =>
         {
-            table.HasCheckConstraint("CK_Votes_VideoId", "[VideoId] BETWEEN 1 AND 30");
             table.HasCheckConstraint("CK_Votes_Category", "[Category] IN ('individual', 'team')");
-            table.HasCheckConstraint(
-                "CK_Votes_VideoCategory",
-                "([VideoId] BETWEEN 1 AND 15 AND [Category] = 'individual') OR " +
-                "([VideoId] BETWEEN 16 AND 30 AND [Category] = 'team')");
             table.HasCheckConstraint("CK_Votes_RiskScore", "[RiskScore] BETWEEN 0 AND 100");
             table.HasCheckConstraint(
                 "CK_Votes_Status",

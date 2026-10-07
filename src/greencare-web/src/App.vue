@@ -7,6 +7,8 @@ import VotingDialogs from './VotingDialogs.vue'
 import type { Bootstrap, Category, Results } from './types'
 const category=ref<Category>('individual'), menuOpen=ref(false), bootstrap=ref<Bootstrap|null>(null), results=ref<Results|null>(null), loadError=ref('')
 const visibleVideos=computed(()=>bootstrap.value?.videos.filter(v=>v.category===category.value)??[])
+const categoryCounts=computed(()=>({individual:bootstrap.value?.videos.filter(v=>v.category==='individual').length??0,team:bootstrap.value?.videos.filter(v=>v.category==='team').length??0}))
+const totalVideos=computed(()=>bootstrap.value?.videos.length??0)
 const remaining=computed(()=>Math.max(0,bootstrap.value?.remaining[category.value]??2))
 const voteFor=(id:number)=>bootstrap.value?.votes.find(v=>v.videoId===id)
 const resultFor=(id:number)=>results.value&&[...results.value.groups.individual,...results.value.groups.team].find(v=>v.id===id)
@@ -34,7 +36,7 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
       </picture>
       <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選，票選期間 10 月 12 日 10:00 至 10 月 23 日 17:00</h1>
       <div class="hero-inner hero-inner-hidden" aria-hidden="true">
-        <div class="hero-meta hero-cta"><p><strong>30 支初賽入圍影片</strong><br>為你喜愛的作品投下一票！</p><a class="primary-link" href="#works">開始觀賞</a></div>
+        <div class="hero-meta hero-cta"><p><strong>{{totalVideos}} 支初賽入圍影片</strong><br>為你喜愛的作品投下一票！</p><a class="primary-link" href="#works">開始觀賞</a></div>
         <a class="hero-scroll" href="#rules" aria-label="查看投票辦法"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></a>
       </div>
     </div>
@@ -48,15 +50,15 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
     <section id="works" class="works" aria-labelledby="worksTitle">
       <div class="section-heading"><div><h2 id="worksTitle">初賽入圍影片</h2><p class="works-subtitle">線上展映</p></div></div>
       <div class="category-tabs" role="tablist" aria-label="參賽組別">
-        <button id="individualTab" class="category-tab" :class="{active:category==='individual'}" type="button" role="tab" :aria-selected="category==='individual'" aria-controls="videoGrid" @click="category='individual'"><span>個人組</span><small>15 支初賽入圍</small></button>
-        <button id="teamTab" class="category-tab" :class="{active:category==='team'}" type="button" role="tab" :aria-selected="category==='team'" aria-controls="videoGrid" @click="category='team'"><span>團體組</span><small>15 支初賽入圍</small></button>
+        <button id="individualTab" class="category-tab" :class="{active:category==='individual'}" type="button" role="tab" :aria-selected="category==='individual'" aria-controls="videoGrid" @click="category='individual'"><span>個人組</span><small>{{categoryCounts.individual}} 支初賽入圍</small></button>
+        <button id="teamTab" class="category-tab" :class="{active:category==='team'}" type="button" role="tab" :aria-selected="category==='team'" aria-controls="videoGrid" @click="category='team'"><span>團體組</span><small>{{categoryCounts.team}} 支初賽入圍</small></button>
       </div>
       <div class="group-heading"><div><p>{{category==='individual'?'個人組':'團體組'}}</p><span>{{category==='individual'?'個人參賽作品':'團體參賽作品'}}</span></div><strong aria-live="polite">已投 {{2-remaining}} 票 / 尚餘 {{remaining}} 票</strong></div>
       <p v-if="loadError" class="empty" role="alert">{{loadError}}</p>
       <div v-else id="videoGrid" class="video-grid" :data-category="category" role="tabpanel" :aria-labelledby="`${category}Tab`" aria-live="polite">
         <button v-for="video in visibleVideos" :key="video.id" class="video-card" :class="{voted:voteFor(video.id)}" type="button" :aria-label="`作品 ${video.number} ${video.title}，${cardStatus(video.id)}`" @click="dialogs?.open(video.id)">
           <span class="card-poster"><img :src="assetPath(video.poster)" alt="" loading="lazy"><span class="video-number">{{video.number}}</span><span class="card-state">{{cardStatus(video.id)}}</span></span>
-          <span class="card-content"><h3>{{video.title}}</h3><span class="team">新北市淡水區忠寮社區</span><strong class="card-votes">{{resultFor(video.id)?.votes.toLocaleString('zh-TW')??'—'}}票</strong></span>
+          <span class="card-content"><h3>{{video.title}}</h3><span class="team">{{video.team}}</span><strong class="card-votes">{{resultFor(video.id)?.votes.toLocaleString('zh-TW')??'—'}}票</strong></span>
         </button>
       </div>
     </section>

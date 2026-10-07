@@ -75,5 +75,6 @@ public sealed class VoteLimitValidatorTests
         $"作品 {id}",
         "測試團隊",
         "video-id",
-        "poster.jpg");
+        "poster.jpg",
+        VoteCategories.Individual);
 }

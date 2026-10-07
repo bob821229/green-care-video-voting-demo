@@ -3,10 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GreenCare.Api.Features.Videos;
 
-public sealed record VideoItem(int Id, string Number, string Title, string Team, string YoutubeId, string Poster)
-{
-    public string Category => Id <= 15 ? "individual" : "team";
-}
+public sealed record VideoItem(
+    int Id,
+    string Number,
+    string Title,
+    string Team,
+    string YoutubeId,
+    string Poster,
+    string Category);
 
 public interface IVideoCatalog
 {
@@ -22,7 +26,7 @@ public sealed class VideoCatalog(GreenCareDbContext db) : IVideoCatalog
             .Where(x => x.IsActive)
             .OrderBy(x => x.Category)
             .ThenBy(x => x.SortOrder)
-            .Select(x => new VideoItem(x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster))
+            .Select(x => new VideoItem(x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster, x.Category))
             .ToListAsync(cancellationToken);
 
     public Task<bool> ContainsAsync(int id, CancellationToken cancellationToken) =>
@@ -31,6 +35,6 @@ public sealed class VideoCatalog(GreenCareDbContext db) : IVideoCatalog
     public Task<VideoItem?> FindAsync(int id, CancellationToken cancellationToken) =>
         db.Videos.AsNoTracking()
             .Where(x => x.Id == id && x.IsActive)
-            .Select(x => new VideoItem(x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster))
+            .Select(x => new VideoItem(x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster, x.Category))
             .SingleOrDefaultAsync(cancellationToken);
 }

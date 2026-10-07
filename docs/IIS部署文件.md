@@ -148,7 +148,7 @@ Production 在 Windows 會以本機 DPAPI 保護持久化 Data Protection keys�
 - [ ] HTTPS 憑證與重新導向正常。
 - [ ] `/` 回傳首頁且靜態資產全部成功。
 - [ ] `/results` 與瀏覽器重新整理正常。
-- [ ] `/api/bootstrap` 回傳 200、活動時間及 30 支作品。
+- [ ] `/api/bootstrap` 回傳 200、活動時間及 27 支啟用作品（個人組 13、團體組 14）。
 - [ ] 首次瀏覽會收到安全的裝置 Cookie。
 - [ ] App Pool recycle 後 Cookie 仍有效。
 - [ ] YouTube 影片可載入並回報觀看進度。

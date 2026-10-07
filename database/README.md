@@ -14,6 +14,7 @@
 ```text
 database/
   scripts/       依編號順序執行的正式異動腳本
+  catalog/       經業主核准、預設只演練的正式作品資料
   verify/        執行後驗證，不異動正式業務資料
   reports/       唯讀的作品、票選結果及受控稽核匯出
   templates/     依環境填值後人工執行的範本
@@ -30,11 +31,13 @@ sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/sc
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/scripts/002_application_permissions.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -f 65001 -i database/scripts/003_video_catalog.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -f 65001 -i database/scripts/004_cross_browser_vote_guard.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -f 65001 -i database/scripts/005_dynamic_video_catalog.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/001_verify_schema.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/002_verify_permissions.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/003_verify_constraints.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/004_verify_video_catalog.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/007_verify_cross_browser_vote_guard.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/008_verify_dynamic_video_catalog.sql
 ```
 
 `-b` 會讓 SQL 錯誤轉成非零結束碼，部署腳本不得省略。
@@ -73,13 +76,15 @@ sqlcmd -S "<server>" -d "<database>" -E -b `
 
 `004_cross_browser_vote_guard.sql` 不新增資料表或修改既有票。它只建立 `IpHash + DeviceSignalHash + Category + Status` 查詢索引，支援應用程式在同一 transaction 內鎖定相同裝置與網路環境的有效票，阻止換瀏覽器或清除 Cookie 後重新取得票數額度。部署新版 API 前須先執行此腳本及 `007_verify_cross_browser_vote_guard.sql`。
 
+`005_dynamic_video_catalog.sql` 移除以作品 ID 推導總數與組別的舊限制。應用程式改讀取 `Videos.Category`、`SortOrder` 與 `IsActive`；外鍵仍確保觀看及投票只能參照存在的作品。
+
 ## 活動結果匯出
 
 活動結束後依 [reports/README.md](./reports/README.md) 的凍結、備份、匯出與雜湊程序執行。一般業主結果使用 `003_vote_summary.sql`；`004`、`005` 含假名化識別與安全訊號，只能作受控內部稽核，不得作公開結果檔。
 
 ## 正式作品置換
 
-取得正式作品後，依 [templates/README.md](./templates/README.md) 使用預設只演練、不寫入的置換範本。正式套用前必須確認觀看與投票資料皆為空。
+2026 正式名單使用 `catalog/2026_official_video_catalog.sql`。第一次執行保持 `@ApplyChanges = 0` 進行演練；確認輸出後才設定確認詞正式套用。正式套用前必須確認觀看與投票資料皆為空。
 
 ## 回復
 

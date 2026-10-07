@@ -10,16 +10,11 @@ public sealed class VideoConfiguration : IEntityTypeConfiguration<Video>
     {
         builder.ToTable("Videos", "dbo", table =>
         {
-            table.HasCheckConstraint("CK_Videos_Id", "[Id] BETWEEN 1 AND 30");
             table.HasCheckConstraint(
                 "CK_Videos_Number",
                 "[Number] = RIGHT('0' + CONVERT(varchar(2), [Id]), 2)");
             table.HasCheckConstraint("CK_Videos_Category", "[Category] IN ('individual', 'team')");
-            table.HasCheckConstraint(
-                "CK_Videos_IdCategory",
-                "([Id] BETWEEN 1 AND 15 AND [Category] = 'individual') OR " +
-                "([Id] BETWEEN 16 AND 30 AND [Category] = 'team')");
-            table.HasCheckConstraint("CK_Videos_SortOrder", "[SortOrder] BETWEEN 1 AND 15");
+            table.HasCheckConstraint("CK_Videos_SortOrder", "[SortOrder] >= 1");
             table.HasCheckConstraint("CK_Videos_Title", "NULLIF(LTRIM(RTRIM([Title])), N'') IS NOT NULL");
             table.HasCheckConstraint("CK_Videos_Team", "NULLIF(LTRIM(RTRIM([Team])), N'') IS NOT NULL");
             table.HasCheckConstraint("CK_Videos_YoutubeId", "NULLIF(LTRIM(RTRIM([YoutubeId])), '') IS NOT NULL");

@@ -11,7 +11,7 @@ public sealed class ResultsBuilderTests
     {
         var videos = new[]
         {
-            Video(3), Video(1), Video(2), Video(17), Video(16)
+            Video(3), Video(1), Video(2), Video(17, "team"), Video(16, "team")
         };
         var counts = new Dictionary<int, int>
         {
@@ -49,6 +49,6 @@ public sealed class ResultsBuilderTests
         Assert.False(result.Live);
     }
 
-    private static VideoItem Video(int id) =>
-        new(id, id.ToString("00"), $"作品 {id}", $"參賽者 {id}", $"youtube-{id}", $"poster-{id}.jpg");
+    private static VideoItem Video(int id, string category = "individual") =>
+        new(id, id.ToString("00"), $"作品 {id}", $"參賽者 {id}", $"youtube-{id}", $"poster-{id}.jpg", category);
 }
