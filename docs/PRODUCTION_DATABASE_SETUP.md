@@ -8,7 +8,10 @@
 
 ## 執行順序
 
-1. 建立空白的 `GreenCare_Production` 並完成第一份 full backup。
+1. 在正式 SQL Server 的 SSMS 依序執行：
+   - `database/production/001_create_production_database.sql`：先填入確認詞，只建立空白 `GreenCare_Production`，不會覆蓋既有同名資料庫。
+   - `database/production/002_backup_empty_production_database.sql`：填入 SQL Server 服務帳號可寫入的絕對備份路徑與確認詞，建立 `COPY_ONLY` full backup，並以 `RESTORE VERIFYONLY` 驗證。
+   - 保存兩支腳本的結果頁；確認資料庫狀態為 `ONLINE`、復原模式為 `FULL`，且備份完成時間與檔案路徑正確。
 2. 依序執行：
    - `database/scripts/001_initial_schema.sql`
    - `database/scripts/002_application_permissions.sql`
