@@ -29,10 +29,12 @@ sqlcmd -S "(localdb)\MSSQLLocalDB" -E -Q "CREATE DATABASE [GreenCare_Development
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/scripts/001_initial_schema.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/scripts/002_application_permissions.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -f 65001 -i database/scripts/003_video_catalog.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -f 65001 -i database/scripts/004_cross_browser_vote_guard.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/001_verify_schema.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/002_verify_permissions.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/003_verify_constraints.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/004_verify_video_catalog.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d GreenCare_Development -b -i database/verify/007_verify_cross_browser_vote_guard.sql
 ```
 
 `-b` 會讓 SQL 錯誤轉成非零結束碼，部署腳本不得省略。
@@ -68,6 +70,8 @@ sqlcmd -S "<server>" -d "<database>" -E -b `
 - 若發現同名但非預期的物件，必須失敗，不得覆蓋。
 
 `003_video_catalog.sql` 會建立 `Videos`、匯入與目前 `videos.json` 相同的 30 筆 Demo 作品，並建立 `WatchSessions`／`Votes` 的作品外鍵。正式作品尚未確認前不得將 Demo 資料視為正式名單；正式名單須以後續版本化 SQL 人工置換並留下紀錄。
+
+`004_cross_browser_vote_guard.sql` 不新增資料表或修改既有票。它只建立 `IpHash + DeviceSignalHash + Category + Status` 查詢索引，支援應用程式在同一 transaction 內鎖定相同裝置與網路環境的有效票，阻止換瀏覽器或清除 Cookie 後重新取得票數額度。部署新版 API 前須先執行此腳本及 `007_verify_cross_browser_vote_guard.sql`。
 
 ## 活動結果匯出
 

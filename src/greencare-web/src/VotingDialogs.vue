@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { api } from './api'
+import { deviceSignal, loadBootstrap } from './deviceContext'
 import type { Bootstrap, Video, Vote, WatchProgress } from './types'
 
 declare global {
@@ -20,18 +21,20 @@ const currentVote=computed(()=>current.value?props.data.votes.find(v=>v.videoId=
 const ratio=computed(()=>current.value?props.data.progress.find(p=>p.videoId===current.value!.id)?.ratio??0:0)
 const qualified=computed(()=>ratio.value>=.8||Boolean(current.value&&props.data.progress.find(p=>p.videoId===current.value!.id)?.qualified))
 const groupVotes=computed(()=>current.value?props.data.votes.filter(v=>v.category===current.value!.category):[])
+const cancellationAllowed=computed(()=>props.data.allowVoteCancellation)
+const cancellableGroupVotes=computed(()=>cancellationAllowed.value?groupVotes.value.filter(v=>v.canCancel):[])
 const groupFull=computed(()=>!currentVote.value&&groupVotes.value.length>=2)
 const showCaptcha=computed(()=>!currentVote.value&&!groupFull.value&&qualified.value&&props.data.activity.state==='active')
 const captchaVisible=computed(()=>!props.data.recaptchaSiteKey||captchaId.value!==null)
 const videosInGroup=computed(()=>props.data.videos.filter(v=>v.category===current.value?.category))
 const currentIndex=computed(()=>videosInGroup.value.findIndex(v=>v.id===current.value?.id))
 const canVote=computed(()=>!busy.value&&!currentVote.value&&!groupFull.value&&Boolean(current.value?.youtubeId)&&qualified.value&&props.data.activity.state==='active')
-const voteButtonText=computed(()=>currentVote.value?(currentVote.value.status==='flagged'?'此票待確認':'已投給這支作品'):!current.value?.youtubeId?'影片尚未開放':!qualified.value?'尚未達投票門檻':props.data.activity.state!=='active'?'目前不在投票期間':groupFull.value?'請先取消一票':busy.value?'處理中':`投給作品 ${current.value.number}`)
+const voteButtonText=computed(()=>currentVote.value?(currentVote.value.status==='flagged'?'此票待確認':'已投票'):!current.value?.youtubeId?'影片尚未開放':!qualified.value?'尚未達投票門檻':props.data.activity.state!=='active'?'目前不在投票期間':groupFull.value?(cancellationAllowed.value?'請先取消一票':'本組已投滿 2 票'):busy.value?'處理中':`投給作品 ${current.value.number}`)
+const replacePanelMessage=computed(()=>cancellationAllowed.value?(cancellableGroupVotes.value.length?'本組已投滿 2 票。可先取消此瀏覽器投出的票，再投其他作品：':'本組已在其他瀏覽器投滿 2 票。如需改投，請回到原投票瀏覽器取消其中一票。'):'本組已投滿 2 票，投票送出後無法取消或改投。')
 const progressPercent=computed(()=>Math.min(100,Math.floor(ratio.value*100)))
 
 function voteWork(vote:Vote){return props.data.videos.find(v=>v.id===vote.videoId)}
 function setMessage(text:string,error=false){message.value=text;messageError.value=error}
-function deviceSignal(){return [navigator.platform,navigator.language,screen.width,screen.height,Intl.DateTimeFormat().resolvedOptions().timeZone].join('|')}
 function syncUrl(id?:number){const url=new URL(location.href);id?url.searchParams.set('work',String(id)):url.searchParams.delete('work');url.hash=id?'works':'';history.replaceState(null,'',url)}
 
 async function ytReady(){
@@ -77,16 +80,16 @@ function developmentCaptcha(checked:boolean){captchaToken.value=checked?'develop
 function askConfirmation(title:string,body:string,accept:string,tone='vote'){confirmTitle.value=title;confirmMessage.value=body;confirmText.value=accept;confirmTone.value=tone;confirmDialog.value?.showModal();return new Promise<boolean>(resolve=>confirmationResolve=resolve)}
 function finishConfirmation(answer:boolean){confirmDialog.value?.close();const resolve=confirmationResolve;confirmationResolve=null;resolve?.(answer)}
 
-async function reload(){const data=await api<Bootstrap>('/api/bootstrap');emit('updated',data);emit('resultsChanged')}
+async function reload(){const data=await loadBootstrap();emit('updated',data);emit('resultsChanged')}
 async function submitVote(){
-  if(groupFull.value){setMessage('本組已投滿 2 票，請先前往已投票的作品取消其中一票。',true);return}
+  if(groupFull.value){setMessage(cancellationAllowed.value?'本組已投滿 2 票，請先前往已投票的作品取消其中一票。':'本組已投滿 2 票，投票送出後無法取消或改投。',true);return}
   if(!captchaToken.value){setMessage('請先完成「我不是機器人」驗證。',true);return}
   const text=`投給「作品 ${current.value!.number}－${current.value!.title}」。`
   if(!await askConfirmation('確認投票',text,'確認投票'))return
   busy.value=true
   try{await api('/api/votes',{method:'POST',body:JSON.stringify({videoId:current.value!.id,recaptchaToken:captchaToken.value,deviceSignal:deviceSignal()})});setMessage('投票成功，謝謝你的參與。');await reload()}catch(error){setMessage(error instanceof Error?error.message:'投票失敗。',true)}finally{busy.value=false;resetCaptcha()}
 }
-async function cancelVote(){if(!currentVote.value)return;if(!await askConfirmation('取消投票',`取消投給「作品 ${current.value!.number}－${current.value!.title}」的票，該組將立即釋放一票額度。`,'確認取消','cancel'))return;busy.value=true;try{await api(`/api/votes/${currentVote.value.id}`,{method:'DELETE'});setMessage('已取消投票。');await reload()}catch(error){setMessage(error instanceof Error?error.message:'取消投票失敗。',true)}finally{busy.value=false}}
+async function cancelVote(){if(!currentVote.value?.canCancel)return;if(!await askConfirmation('取消投票',`取消投給「作品 ${current.value!.number}－${current.value!.title}」的票，該組將立即釋放一票額度。`,'確認取消','cancel'))return;busy.value=true;try{await api(`/api/votes/${currentVote.value.id}`,{method:'DELETE'});setMessage('已取消投票。');await reload()}catch(error){setMessage(error instanceof Error?error.message:'取消投票失敗。',true)}finally{busy.value=false}}
 async function visibilityChanged(){
   clearTimer()
   await sendProgress('visibility',false)
@@ -107,9 +110,9 @@ defineExpose({open})
     <div class="watch-info">
       <div class="watch-heading"><p class="eyebrow">{{groupName}} {{current?.number}}</p><h2>{{current?.title}}</h2><p>新北市淡水區忠寮社區</p></div>
       <div class="progress-block"><div class="progress-label"><span>有效觀看進度</span><strong>{{progressPercent}}%</strong></div><div class="progress"><span :style="{width:`${progressPercent}%`}"></span></div><p>觀看達 80% 後即可投票。快轉及背景播放不列入進度。</p></div>
-      <div v-if="groupFull" class="replace-panel"><strong>本組已投滿 2 票。請先前往已投票的作品，確認後取消其中一票：</strong><div><button v-for="vote in groupVotes" :key="vote.id" type="button" @click="open(vote.videoId)"><span>作品 {{voteWork(vote)?.number}}・{{voteWork(vote)?.title}}</span><em>前往查看</em></button></div></div>
+      <div v-if="groupFull" class="replace-panel"><strong>{{replacePanelMessage}}</strong><div v-if="cancellationAllowed&&cancellableGroupVotes.length"><button v-for="vote in cancellableGroupVotes" :key="vote.id" type="button" @click="open(vote.videoId)"><span>作品 {{voteWork(vote)?.number}}・{{voteWork(vote)?.title}}</span><em>前往查看</em></button></div></div>
       <div v-show="showCaptcha" ref="captchaBox" class="recaptcha-box" :class="{'captcha-visible':captchaVisible}"><label v-if="!data.recaptchaSiteKey" class="demo-captcha"><input ref="developmentCaptchaInput" type="checkbox" @change="developmentCaptcha(($event.target as HTMLInputElement).checked)"> <span><strong>{{data.demo?'展示版驗證':'本機開發驗證'}}</strong><small>正式環境將使用 reCAPTCHA</small></span></label></div>
-      <button class="vote-button" type="button" :disabled="!canVote" @click="submitVote">{{voteButtonText}}</button><button v-if="currentVote&&data.activity.state==='active'" class="cancel-vote-button" type="button" :disabled="busy" @click="cancelVote">取消這一票</button>
+      <button class="vote-button" type="button" :disabled="!canVote" @click="submitVote">{{voteButtonText}}</button><button v-if="cancellationAllowed&&currentVote?.canCancel&&data.activity.state==='active'" class="cancel-vote-button" type="button" :disabled="busy" @click="cancelVote">取消這一票</button>
       <p class="message" :class="messageError?'error':'success'" role="status">{{message}}</p>
       <nav class="video-pagination" aria-label="切換參賽影片"><button type="button" :disabled="currentIndex<=0" @click="navigate(-1)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>上一部</span></button><button type="button" :disabled="currentIndex<0||currentIndex>=videosInGroup.length-1" @click="navigate(1)"><span>下一部</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></nav>
     </div>

@@ -71,6 +71,7 @@ public static class BackendInfrastructureExtensions
         services.AddScoped<IVideoCatalog, VideoCatalog>();
         services.AddScoped<IDeviceCookieService, DeviceCookieService>();
         services.AddScoped<IDeviceIdentityService, DeviceIdentityService>();
+        services.AddScoped<IVoteEnvironmentService, VoteEnvironmentService>();
         services.AddScoped<IVoteRiskService, VoteRiskService>();
         services.AddHttpClient<ICaptchaVerifier, CaptchaVerifier>(client =>
         {

@@ -11,12 +11,13 @@ public interface IVoteRiskService
     Task<VoteRisk> EvaluateAsync(Guid deviceId, string? remoteIp, string? deviceSignal, DateTime nowUtc, CancellationToken cancellationToken);
 }
 
-public sealed class VoteRiskService(GreenCareDbContext db, IHmacService hmac) : IVoteRiskService
+public sealed class VoteRiskService(GreenCareDbContext db, IVoteEnvironmentService environments) : IVoteRiskService
 {
     public async Task<VoteRisk> EvaluateAsync(Guid deviceId, string? remoteIp, string? deviceSignal, DateTime nowUtc, CancellationToken cancellationToken)
     {
-        var ipHash = hmac.Compute("vote-ip-v1", remoteIp ?? string.Empty);
-        var signalHash = string.IsNullOrWhiteSpace(deviceSignal) ? null : hmac.Compute("device-signal-v1", deviceSignal);
+        var environment = environments.Create(remoteIp, deviceSignal);
+        var ipHash = environment.IpHash;
+        var signalHash = environment.DeviceSignalHash;
         var cutoff = nowUtc.AddMinutes(-10);
         var recentIp = await db.Votes.CountAsync(x => x.IpHash == ipHash && x.CreatedAtUtc >= cutoff, cancellationToken);
         var others = signalHash is null ? 0 : await db.Votes

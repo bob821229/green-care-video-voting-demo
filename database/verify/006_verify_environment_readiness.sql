@@ -23,7 +23,17 @@ IF OBJECT_ID(N'dbo.SchemaVersions', N'U') IS NULL
    OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '001')
    OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '002')
    OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '003')
-    THROW 50934, 'Schema versions 001, 002, and 003 are required.', 1;
+   OR NOT EXISTS (SELECT 1 FROM dbo.SchemaVersions WHERE VersionNumber = '004')
+    THROW 50934, 'Schema versions 001, 002, 003, and 004 are required.', 1;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_Environment_Category_Status'
+)
+    THROW 50943, 'Cross-browser vote guard index is missing.', 1;
 
 IF OBJECT_ID(N'dbo.Videos', N'U') IS NULL
    OR OBJECT_ID(N'dbo.FK_WatchSessions_Videos_VideoId', N'F') IS NULL

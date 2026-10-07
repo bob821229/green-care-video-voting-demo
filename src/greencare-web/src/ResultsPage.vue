@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from './api'
+import { loadBootstrap } from './deviceContext'
 import { assetPath, homePath, resultsPath } from './paths'
 import VotingDialogs from './VotingDialogs.vue'
 import type { Bootstrap, Category, Results } from './types'
@@ -16,7 +17,7 @@ const laurel=(category:Category)=>assetPath(`images/${category==='individual'?'l
 const homeUrl=homePath(),resultsUrl=resultsPath()
 async function openWork(id:number){
   try{
-    if(!bootstrap.value){bootstrap.value=await api<Bootstrap>('/api/bootstrap');await nextTick()}
+    if(!bootstrap.value){bootstrap.value=await loadBootstrap();await nextTick()}
     await dialogs.value?.open(id)
   }catch(error){loadError.value=error instanceof Error?error.message:'作品資料暫時無法載入。'}
 }

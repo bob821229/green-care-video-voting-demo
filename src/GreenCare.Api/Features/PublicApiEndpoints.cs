@@ -3,6 +3,7 @@ using GreenCare.Api.Data;
 using GreenCare.Api.Data.Entities;
 using GreenCare.Api.Features.Devices;
 using GreenCare.Api.Features.Videos;
+using GreenCare.Api.Features.Voting;
 using GreenCare.Api.Features.Watching;
 using GreenCare.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,7 @@ public static class PublicApiEndpoints
     private static async Task<IResult> BootstrapAsync(
         HttpContext context,
         IDeviceIdentityService devices,
+        IVoteEnvironmentService environments,
         IVideoCatalog videos,
         IActivityService activityService,
         GreenCareDbContext db,
@@ -34,10 +36,33 @@ public static class PublicApiEndpoints
         CancellationToken cancellationToken)
     {
         var deviceId = await devices.GetOrCreateAsync(context, cancellationToken);
-        var votes = await db.Votes.AsNoTracking()
-            .Where(x => x.DeviceId == deviceId && (x.Status == VoteStatuses.Valid || x.Status == VoteStatuses.Flagged))
+        var allowVoteCancellation = configuration.GetValue<bool>("Voting:AllowCancellation");
+        var deviceSignal = context.Request.Headers["X-Device-Signal"].ToString();
+        var environment = environments.Create(context.Connection.RemoteIpAddress?.ToString(), deviceSignal);
+        var votesQuery = db.Votes.AsNoTracking()
+            .Where(x => x.Status == VoteStatuses.Valid || x.Status == VoteStatuses.Flagged);
+        if (environment.DeviceSignalHash is null)
+        {
+            votesQuery = votesQuery.Where(x => x.DeviceId == deviceId);
+        }
+        else
+        {
+            votesQuery = votesQuery.Where(x =>
+                x.DeviceId == deviceId ||
+                (x.IpHash == environment.IpHash && x.DeviceSignalHash == environment.DeviceSignalHash));
+        }
+
+        var votes = await votesQuery
             .OrderBy(x => x.CreatedAtUtc)
-            .Select(x => new { x.Id, x.VideoId, x.Category, x.Status, x.CreatedAtUtc })
+            .Select(x => new
+            {
+                x.Id,
+                x.VideoId,
+                x.Category,
+                x.Status,
+                x.CreatedAtUtc,
+                CanCancel = allowVoteCancellation && x.DeviceId == deviceId
+            })
             .ToListAsync(cancellationToken);
         var progress = await db.WatchSessions.AsNoTracking()
             .Where(x => x.DeviceId == deviceId)
@@ -58,12 +83,23 @@ public static class PublicApiEndpoints
         {
             videos = catalog.Select(x => new
             {
-                x.Id, x.Number, x.Title, x.Team, x.YoutubeId, x.Poster, x.Category
+                x.Id,
+                x.Number,
+                x.Title,
+                x.Team,
+                x.YoutubeId,
+                x.Poster,
+                x.Category
             }),
             votes,
             progress,
             limits = new { individual = 2, team = 2 },
-            remaining = new { individual = 2 - individualUsed, team = 2 - teamUsed },
+            remaining = new
+            {
+                individual = Math.Max(0, 2 - individualUsed),
+                team = Math.Max(0, 2 - teamUsed)
+            },
+            allowVoteCancellation,
             activity = new
             {
                 state = activity.State.ToString().ToLowerInvariant(),
@@ -107,9 +143,14 @@ public static class PublicApiEndpoints
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var session = new WatchSession
         {
-            Id = Guid.NewGuid(), DeviceId = deviceId, VideoId = checked((byte)request.VideoId),
-            DurationSeconds = duration, WatchedSeconds = 0, LastPositionSeconds = 0,
-            LastPingAtUtc = now, CreatedAtUtc = now
+            Id = Guid.NewGuid(),
+            DeviceId = deviceId,
+            VideoId = checked((byte)request.VideoId),
+            DurationSeconds = duration,
+            WatchedSeconds = 0,
+            LastPositionSeconds = 0,
+            LastPingAtUtc = now,
+            CreatedAtUtc = now
         };
         db.WatchSessions.Add(session);
         await db.SaveChangesAsync(cancellationToken);

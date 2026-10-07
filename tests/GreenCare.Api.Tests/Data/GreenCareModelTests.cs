@@ -38,6 +38,18 @@ public sealed class GreenCareModelTests
         Assert.Equal(
             "[CancelledAtUtc] IS NULL AND [VoidedAtUtc] IS NULL",
             index.GetFilter());
+
+        var environmentIndex = entity.GetIndexes()
+            .Single(x => x.GetDatabaseName() == "IX_Votes_Environment_Category_Status");
+        Assert.Equal(
+            new[]
+            {
+                nameof(Vote.IpHash),
+                nameof(Vote.DeviceSignalHash),
+                nameof(Vote.Category),
+                nameof(Vote.Status)
+            },
+            environmentIndex.Properties.Select(x => x.Name));
     }
 
     [Fact]

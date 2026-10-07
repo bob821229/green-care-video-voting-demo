@@ -28,6 +28,8 @@ public static class VotingEndpoints
         var deviceId = await devices.GetOrCreateAsync(context, cancellationToken);
         if (activity.GetStatus().State != ActivityState.Active)
             return Results.Json(new { error = "目前不在投票期間。" }, statusCode: StatusCodes.Status403Forbidden);
+        if (string.IsNullOrWhiteSpace(request.DeviceSignal) || request.DeviceSignal.Length > 512)
+            return Results.BadRequest(new { error = "無法辨識裝置環境，請重新整理後再試。" });
         if (!limiter.Allow("vote-device", deviceId.ToString("D"), 10)) return RateLimited(context);
         if (!await captcha.VerifyAsync(request.RecaptchaToken, context.Connection.RemoteIpAddress?.ToString(), cancellationToken))
             return Results.Json(new { error = "機器人驗證未通過，請重新勾選。" }, statusCode: StatusCodes.Status403Forbidden);
@@ -36,13 +38,22 @@ public static class VotingEndpoints
         if (video is null) return Results.Json(new { error = "找不到這支作品。" }, statusCode: StatusCodes.Status409Conflict);
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var risk = await riskService.EvaluateAsync(deviceId, context.Connection.RemoteIpAddress?.ToString(), request.DeviceSignal, now, cancellationToken);
+        var deviceSignalHash = risk.DeviceSignalHash
+            ?? throw new InvalidOperationException("A validated device signal must produce a hash.");
 
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         try
         {
             await LockDeviceAsync(db, deviceId, cancellationToken);
-            var activeVotes = await LockActiveVotesAsync(db, deviceId, cancellationToken);
-            var error = ValidateVote(activeVotes, video);
+            var environmentVotes = await LockEnvironmentActiveVotesAsync(
+                db, risk.IpHash, deviceSignalHash, video.Category, cancellationToken);
+            var deviceVotes = await LockDeviceActiveVotesAsync(
+                db, deviceId, video.Category, cancellationToken);
+            var activeVotes = environmentVotes
+                .Concat(deviceVotes)
+                .DistinctBy(x => x.Id)
+                .ToArray();
+            var error = VoteLimitValidator.Validate(activeVotes, video, deviceId);
             if (error is not null) return await RollbackConflictAsync(transaction, error, cancellationToken);
             var watchId = await FindQualifiedWatchAsync(db, deviceId, video.Id, cancellationToken);
             if (watchId is null) return await RollbackConflictAsync(transaction, "請先有效觀看這支影片達 80%。", cancellationToken);
@@ -53,8 +64,10 @@ public static class VotingEndpoints
             await db.SaveChangesAsync(cancellationToken);
             db.AuditLogs.Add(new AuditLog
             {
-                Action = "create_vote", Target = $"vote:{vote.Id}",
-                DetailJson = JsonSerializer.Serialize(new { videoId = video.Id, status = risk.Status }), CreatedAtUtc = now
+                Action = "create_vote",
+                Target = $"vote:{vote.Id}",
+                DetailJson = JsonSerializer.Serialize(new { videoId = video.Id, status = risk.Status }),
+                CreatedAtUtc = now
             });
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -71,8 +84,11 @@ public static class VotingEndpoints
     private static async Task<IResult> CancelAsync(
         long id, HttpContext context, IDeviceIdentityService devices, IActivityService activity,
         IRequestWindowLimiter limiter, GreenCareDbContext db, IResultsCache resultsCache, TimeProvider timeProvider,
+        IConfiguration configuration,
         CancellationToken cancellationToken)
     {
+        if (!configuration.GetValue<bool>("Voting:AllowCancellation"))
+            return Results.Json(new { error = "投票送出後無法取消或改投。" }, statusCode: StatusCodes.Status403Forbidden);
         var deviceId = await devices.GetOrCreateAsync(context, cancellationToken);
         if (activity.GetStatus().State != ActivityState.Active)
             return Results.Json(new { error = "投票截止後不能取消。" }, statusCode: StatusCodes.Status403Forbidden);
@@ -93,8 +109,34 @@ public static class VotingEndpoints
         return Results.Ok(new { ok = true });
     }
 
-    private static Task<List<Vote>> LockActiveVotesAsync(GreenCareDbContext db, Guid deviceId, CancellationToken token) =>
-        db.Votes.FromSqlInterpolated($"SELECT * FROM dbo.Votes WITH (UPDLOCK, HOLDLOCK) WHERE DeviceId = {deviceId} AND Status IN ('valid','flagged')")
+    private static Task<List<Vote>> LockEnvironmentActiveVotesAsync(
+        GreenCareDbContext db,
+        byte[] ipHash,
+        byte[] deviceSignalHash,
+        string category,
+        CancellationToken token) =>
+        db.Votes.FromSqlInterpolated($"""
+            SELECT *
+            FROM dbo.Votes WITH (UPDLOCK, HOLDLOCK, INDEX(IX_Votes_Environment_Category_Status))
+            WHERE IpHash = {ipHash}
+              AND DeviceSignalHash = {deviceSignalHash}
+              AND Category = {category}
+              AND Status IN ('valid', 'flagged')
+            """)
+            .ToListAsync(token);
+
+    private static Task<List<Vote>> LockDeviceActiveVotesAsync(
+        GreenCareDbContext db,
+        Guid deviceId,
+        string category,
+        CancellationToken token) =>
+        db.Votes.FromSqlInterpolated($"""
+            SELECT *
+            FROM dbo.Votes WITH (UPDLOCK, HOLDLOCK, INDEX(IX_Votes_Device_Category_Status))
+            WHERE DeviceId = {deviceId}
+              AND Category = {category}
+              AND Status IN ('valid', 'flagged')
+            """)
             .ToListAsync(token);
 
     private static async Task LockDeviceAsync(GreenCareDbContext db, Guid deviceId, CancellationToken token) =>
@@ -107,19 +149,17 @@ public static class VotingEndpoints
             .Where(x => x.DeviceId == deviceId && x.VideoId == videoId && x.QualifiedAtUtc != null)
             .OrderByDescending(x => x.QualifiedAtUtc).Select(x => (Guid?)x.Id).FirstOrDefaultAsync(token);
 
-    private static string? ValidateVote(List<Vote> votes, VideoItem video)
-    {
-        if (votes.Any(x => x.VideoId == video.Id)) return "你已經投過這支作品。";
-        if (votes.Count(x => x.Category == video.Category) >= 2)
-            return $"{(video.Category == VoteCategories.Individual ? "個人組" : "團體組")}已使用兩票，請先取消一票後再投票。";
-        return null;
-    }
-
     private static Vote BuildVote(Guid deviceId, VideoItem video, Guid watchId, VoteRisk risk, DateTime now) => new()
     {
-        DeviceId = deviceId, VideoId = checked((byte)video.Id), Category = video.Category,
-        WatchSessionId = watchId, IpHash = risk.IpHash, DeviceSignalHash = risk.DeviceSignalHash,
-        RiskScore = risk.Score, Status = risk.Status, CreatedAtUtc = now
+        DeviceId = deviceId,
+        VideoId = checked((byte)video.Id),
+        Category = video.Category,
+        WatchSessionId = watchId,
+        IpHash = risk.IpHash,
+        DeviceSignalHash = risk.DeviceSignalHash,
+        RiskScore = risk.Score,
+        Status = risk.Status,
+        CreatedAtUtc = now
     };
 
     private static void AddRiskEventIfNeeded(GreenCareDbContext db, Guid deviceId, VoteRisk risk, DateTime now)
@@ -127,7 +167,9 @@ public static class VotingEndpoints
         if (risk.Score == 0) return;
         db.RiskEvents.Add(new RiskEvent
         {
-            DeviceId = deviceId, IpHash = risk.IpHash, Kind = "vote_risk",
+            DeviceId = deviceId,
+            IpHash = risk.IpHash,
+            Kind = "vote_risk",
             DetailJson = JsonSerializer.Serialize(new { score = risk.Score, recentIp = risk.RecentIp, others = risk.OtherDevices }),
             CreatedAtUtc = now
         });

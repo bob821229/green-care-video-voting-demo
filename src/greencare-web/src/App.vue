@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from './api'
+import { loadBootstrap } from './deviceContext'
 import { assetPath, resultsPath } from './paths'
 import VotingDialogs from './VotingDialogs.vue'
 import type { Bootstrap, Category, Results } from './types'
 const category=ref<Category>('individual'), menuOpen=ref(false), bootstrap=ref<Bootstrap|null>(null), results=ref<Results|null>(null), loadError=ref('')
 const visibleVideos=computed(()=>bootstrap.value?.videos.filter(v=>v.category===category.value)??[])
-const remaining=computed(()=>bootstrap.value?.remaining[category.value]??2)
+const remaining=computed(()=>Math.max(0,bootstrap.value?.remaining[category.value]??2))
 const voteFor=(id:number)=>bootstrap.value?.votes.find(v=>v.videoId===id)
 const resultFor=(id:number)=>results.value&&[...results.value.groups.individual,...results.value.groups.team].find(v=>v.id===id)
 function cardStatus(id:number){const vote=voteFor(id);if(vote)return vote.status==='flagged'?'待確認':'已投票';const ratio=bootstrap.value?.progress.find(p=>p.videoId===id)?.ratio??0;return ratio>=.8?'可投票':ratio>0?`已觀看 ${Math.floor(ratio*100)}%`:'開始觀看'}
@@ -15,7 +16,7 @@ const resultsUrl=resultsPath()
 let resultsTimer:number|undefined
 async function refreshResults(){try{results.value=await api<Results>('/api/results')}catch{}}
 function updateBootstrap(data:Bootstrap){bootstrap.value=data}
-onMounted(async()=>{try{bootstrap.value=await api<Bootstrap>('/api/bootstrap');await refreshResults();const requested=Number(new URLSearchParams(location.search).get('work'));if(requested&&bootstrap.value.videos.some(v=>v.id===requested))dialogs.value?.open(requested);resultsTimer=window.setInterval(refreshResults,30000)}catch{loadError.value='作品資料暫時無法載入，請稍後再試。'}})
+onMounted(async()=>{try{bootstrap.value=await loadBootstrap();await refreshResults();const requested=Number(new URLSearchParams(location.search).get('work'));if(requested&&bootstrap.value.videos.some(v=>v.id===requested))dialogs.value?.open(requested);resultsTimer=window.setInterval(refreshResults,30000)}catch{loadError.value='作品資料暫時無法載入，請稍後再試。'}})
 onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
 </script>
 
@@ -41,7 +42,7 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
   <main>
     <section id="rules" class="rules-brief" aria-labelledby="rulesTitle">
       <div class="rules-brief-heading"><h2 id="rulesTitle">投票辦法</h2></div>
-      <ol><li><strong>每組2票</strong><span>個人組、團體組<br>各投2部</span></li><li><strong>觀看80%</strong><span>達到有效觀看門檻<br>才開始投票</span></li><li><strong>不重複</strong><span>同一作品<br>不能投兩票</span></li><li><strong>可改投</strong><span>前往原作品取消<br>再投其他作品</span></li></ol>
+      <ol><li><strong>每組2票</strong><span>個人組、團體組<br>各投2部</span></li><li><strong>觀看80%</strong><span>達到有效觀看門檻<br>才開始投票</span></li><li><strong>不重複</strong><span>同一作品<br>不能投兩票</span></li><li><strong>不可取消</strong><span>投票送出後<br>無法取消或改投</span></li></ol>
       <p>快轉、背景播放、暫停及異常倍速不列入有效觀看進度。</p>
     </section>
     <section id="works" class="works" aria-labelledby="worksTitle">

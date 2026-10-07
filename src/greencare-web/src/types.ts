@@ -1,6 +1,6 @@
 export type Category = 'individual' | 'team'
 export type Video = { id:number; number:string; title:string; team:string; youtubeId:string; poster:string; category:Category }
-export type Vote = { id:number; videoId:number; category:Category; status:string; createdAtUtc:string }
+export type Vote = { id:number; videoId:number; category:Category; status:string; createdAtUtc:string; canCancel:boolean }
 export type WatchProgress = { videoId:number; ratio:number; qualified:boolean|number }
 export type Bootstrap = {
   videos:Video[]
@@ -8,6 +8,7 @@ export type Bootstrap = {
   progress:WatchProgress[]
   limits:Record<Category,number>
   remaining:Record<Category,number>
+  allowVoteCancellation:boolean
   activity:{state:string;startsAt:string;endsAt:string}
   recaptchaSiteKey:string
   demo:boolean

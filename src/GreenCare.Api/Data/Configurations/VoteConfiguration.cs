@@ -84,5 +84,9 @@ public sealed class VoteConfiguration : IEntityTypeConfiguration<Vote>
         builder.HasIndex(x => new { x.VideoId, x.Status }, "IX_Votes_Video_Status")
             .IncludeProperties(x => x.CreatedAtUtc);
         builder.HasIndex(x => new { x.IpHash, x.CreatedAtUtc }, "IX_Votes_IpHash_CreatedAtUtc");
+        builder.HasIndex(
+                x => new { x.IpHash, x.DeviceSignalHash, x.Category, x.Status },
+                "IX_Votes_Environment_Category_Status")
+            .IncludeProperties(x => new { x.DeviceId, x.VideoId, x.CreatedAtUtc });
     }
 }

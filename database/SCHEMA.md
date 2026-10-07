@@ -20,7 +20,7 @@
 - `WatchSessions.VideoId` 與 `Votes.VideoId` 均以可信任外鍵參照 `Videos.Id`。
 - 觀看秒數與播放位置不可為負，也不可超過影片長度。
 - 投票狀態限定 `valid`、`flagged`、`cancelled`、`void`。
-- 同一裝置對同一作品最多只能存在一張有效票；取消或作廢後才可再投。
+- 同一 Cookie 裝置，或相同 IP hash 與裝置訊號 hash 的環境，對同一作品不可重複投票，每組最多使用兩票；取消或作廢後才可再投。
 - `cancelled` 必須有取消時間；`void` 必須有作廢時間與原因。
 - IP 與裝置訊號只儲存 32-byte hash，不儲存原始值。
 - JSON 明細由 `ISJSON` constraint 驗證。
@@ -31,6 +31,7 @@
 - `Votes(DeviceId, VideoId)` filtered unique index 阻止重複有效票。
 - 票數依裝置／分類／狀態及作品／狀態建立查詢索引。
 - IP hash、風險事件與稽核紀錄依時間建立追查索引。
+- `Votes(IpHash, DeviceSignalHash, Category, Status)` 支援跨瀏覽器票數檢查及 Serializable transaction 的範圍鎖定。
 
 ## 權限模型
 

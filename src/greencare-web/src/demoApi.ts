@@ -9,7 +9,11 @@ const sessions=new Map<string,DemoSession>()
 let videosPromise:Promise<Video[]>|undefined
 
 function loadState():DemoState{
-  try{return JSON.parse(localStorage.getItem(storageKey)||'') as DemoState}catch{return {votes:[],progress:[]}}
+  try{
+    const state=JSON.parse(localStorage.getItem(storageKey)||'') as DemoState
+    state.votes=state.votes.map(vote=>({...vote,canCancel:vote.canCancel??true}))
+    return state
+  }catch{return {votes:[],progress:[]}}
 }
 function saveState(state:DemoState){localStorage.setItem(storageKey,JSON.stringify(state))}
 function body(init?:RequestInit){return init?.body?JSON.parse(String(init.body)) as Record<string,unknown>:{} }
@@ -26,7 +30,7 @@ async function videos(){
 
 async function bootstrap():Promise<Bootstrap>{
   const state=loadState()
-  return {videos:await videos(),votes:state.votes,progress:state.progress,limits:{individual:2,team:2},remaining:{individual:remaining(state,'individual'),team:remaining(state,'team')},activity:{state:'active',startsAt:'2026-10-12T02:00:00Z',endsAt:'2026-10-23T09:00:00Z'},recaptchaSiteKey:'',demo:true}
+  return {videos:await videos(),votes:state.votes,progress:state.progress,limits:{individual:2,team:2},remaining:{individual:remaining(state,'individual'),team:remaining(state,'team')},allowVoteCancellation:false,activity:{state:'active',startsAt:'2026-10-12T02:00:00Z',endsAt:'2026-10-23T09:00:00Z'},recaptchaSiteKey:'',demo:true}
 }
 
 async function results():Promise<Results>{
@@ -62,9 +66,9 @@ export async function demoApi<T>(url:string,init?:RequestInit):Promise<T>{
   if(url==='/api/votes'&&method==='POST'){
     const videoId=Number(payload.videoId),group=category(videoId)
     if(state.votes.some(v=>v.videoId===videoId))throw new Error('這支作品已投過票。')
-    if(remaining(state,group)<=0)throw new Error('本組已投滿 2 票，請先取消其中一票。')
+    if(remaining(state,group)<=0)throw new Error('本組已投滿 2 票，投票送出後無法取消或改投。')
     const qualified=state.progress.some(item=>item.videoId===videoId&&(Boolean(item.qualified)||item.ratio>=.8));if(!qualified)throw new Error('觀看進度尚未達 80%。')
-    const vote:Vote={id:Date.now(),videoId,category:group,status:'valid',createdAtUtc:new Date().toISOString()};state.votes.push(vote);saveState(state);return vote as T
+    const vote:Vote={id:Date.now(),videoId,category:group,status:'valid',createdAtUtc:new Date().toISOString(),canCancel:true};state.votes.push(vote);saveState(state);return vote as T
   }
   const cancel=url.match(/^\/api\/votes\/(\d+)$/)
   if(cancel&&method==='DELETE'){state.votes=state.votes.filter(v=>v.id!==Number(cancel[1]));saveState(state);return {ok:true} as T}
