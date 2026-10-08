@@ -43,3 +43,14 @@
 - API 連線字串只能指向 `GreenCare_Production`，不得沿用 `GreenCare_Development`。
 - 正式 application user 不得加入 `db_owner`。
 - 上線前再次執行 full backup，完成首頁、觀看、投票及排名 smoke test 後才開放活動。
+
+## 正式環境驗收後清除測試活動資料
+
+正式站或測試站停止連線至 `GreenCare_Production` 後，才可執行
+`database/production/003_clear_production_test_activity.sql`：
+
+1. 先保持 `@Execute = 0` 執行預覽，核對資料庫必須是 `GreenCare_Production`、啟用作品必須是 27 筆，並保存五張活動資料表的清理前筆數。
+2. 確認已停止所有測試操作，再將 `@Execute = 1`，並填入確認詞 `CLEAR GREENCARE PRODUCTION TEST ACTIVITY`。
+3. 腳本只會清除 `Devices`、`WatchSessions`、`Votes`、`RiskEvents`、`AuditLogs`；會保留 `Videos`、`SchemaVersions`、資料庫使用者、角色及所有 Schema 物件。
+4. 清除後執行 `database/verify/006_verify_environment_readiness.sql`，使用正式 application user，並設定 `RequireEmptyActivity=1`、`RequireOfficialCatalog=1`。
+5. 驗證通過後，使用 `database/production/002_backup_empty_production_database.sql` 建立新的開站前 `COPY_ONLY + CHECKSUM` 備份並通過 `RESTORE VERIFYONLY`。備份檔名應包含 `prelaunch` 與日期時間，避免覆蓋既有備份。
