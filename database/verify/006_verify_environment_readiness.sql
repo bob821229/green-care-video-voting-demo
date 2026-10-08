@@ -50,8 +50,12 @@ IF @RequireOfficialCatalog = 1
    AND EXISTS
    (
        SELECT 1 FROM dbo.Videos
-       WHERE YoutubeId IN ('YLi5uuy5bw4', 'gDQk3jAY67U')
-          OR Poster IN (N'images/posters/individual-demo.jpg', N'images/posters/team-demo.jpg')
+       WHERE IsActive = 1
+         AND
+         (
+              YoutubeId IN ('YLi5uuy5bw4', 'gDQk3jAY67U')
+           OR Poster IN (N'images/posters/individual-demo.jpg', N'images/posters/team-demo.jpg')
+         )
    )
     THROW 50937, 'Production readiness failed because Demo video data remains.', 1;
 
@@ -82,7 +86,8 @@ END;
 SELECT
     DB_NAME() AS DatabaseName,
     @AppUserName AS ApplicationUser,
-    (SELECT COUNT(*) FROM dbo.Videos) AS VideoCount,
+    (SELECT COUNT(*) FROM dbo.Videos WHERE IsActive = 1) AS ActiveVideoCount,
+    (SELECT COUNT(*) FROM dbo.Videos WHERE IsActive = 0) AS InactiveVideoCount,
     (SELECT COUNT(*) FROM dbo.Devices) AS DeviceCount,
     (SELECT COUNT(*) FROM dbo.WatchSessions) AS WatchSessionCount,
     (SELECT COUNT(*) FROM dbo.Votes) AS VoteCount,

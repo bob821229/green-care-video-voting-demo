@@ -18,11 +18,17 @@
    - `database/scripts/003_video_catalog.sql`
    - `database/scripts/004_cross_browser_vote_guard.sql`
    - `database/scripts/005_dynamic_video_catalog.sql`
-3. 執行 `database/verify/001_verify_schema.sql` 至 `004_verify_video_catalog.sql`、`007_verify_cross_browser_vote_guard.sql` 與 `008_verify_dynamic_video_catalog.sql`。
+3. 正式庫完成 Schema `005` 後，依序執行：
+   - `database/verify/001_verify_schema.sql`
+   - `database/verify/002_verify_permissions.sql`
+   - `database/verify/005_verify_official_video_catalog.sql`
+   - `database/verify/007_verify_cross_browser_vote_guard.sql`
+   - `database/verify/008_verify_dynamic_video_catalog.sql`
+   - 不要執行 `003_verify_constraints.sql` 與 `004_verify_video_catalog.sql`：兩者只適用於 Schema `005` 以前固定 30 筆、依作品編號分組的舊結構。
 4. 開啟 `database/catalog/2026_official_video_catalog.sql`，保持 `@ApplyChanges = 0` 執行演練。
 5. 核對輸出必須是 27 筆啟用作品，其中個人組 13 筆、團體組 14 筆。
 6. 將 `@ApplyChanges` 設為 `1`，並將 `@Confirmation` 設為 `N'APPLY 2026 GREENCARE OFFICIAL CATALOG'` 後正式執行。
-7. 執行 `database/verify/005_verify_official_video_catalog.sql`。
+7. 確認上述 `005_verify_official_video_catalog.sql` 已輸出 27 筆正式啟用作品。
 8. 以 `database/templates/add_application_user.sql` 將 IIS 使用的 database user 加入 `GreenCareAppRole`。
 9. 執行 `database/verify/006_verify_environment_readiness.sql`，設定：
    - `ExpectedDatabase=GreenCare_Production`
