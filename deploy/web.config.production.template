@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore"
+             path="*"
+             verb="*"
+             modules="AspNetCoreModuleV2"
+             resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet"
+                  arguments=".\GreenCare.Api.dll"
+                  stdoutLogEnabled="false"
+                  stdoutLogFile=".\logs\stdout"
+                  hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT"
+                               value="Production" />
+          <environmentVariable name="AllowedHosts"
+                               value="greencare.triwra.org.tw" />
+          <environmentVariable name="ConnectionStrings__GreenCare"
+                               value="Server=labdb;Database=GreenCare_Production;User ID=GreenCare_Production_User;Password=__PRODUCTION_SQL_PASSWORD__;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True" />
+          <environmentVariable name="Security__AppSecret"
+                               value="__PRODUCTION_APP_SECRET__" />
+          <environmentVariable name="Security__DataProtectionKeysPath"
+                               value="D:\Webs_SSL\greencare_shared\production-keys" />
+          <environmentVariable name="Captcha__SiteKey"
+                               value="__PRODUCTION_CAPTCHA_SITE_KEY__" />
+          <environmentVariable name="Captcha__SecretKey"
+                               value="__PRODUCTION_CAPTCHA_SECRET_KEY__" />
+          <environmentVariable name="Captcha__ExpectedHostname"
+                               value="greencare.triwra.org.tw" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>
