@@ -2,7 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from './api'
 import { loadBootstrap } from './deviceContext'
-import { assetPath, homePath, resultsPath } from './paths'
+import { assetPath, homePath, posterPath, posterSrcSet, resultsPath } from './paths'
+import { displayWorkNumber } from './workNumber'
 import VotingDialogs from './VotingDialogs.vue'
 import type { Bootstrap, Category, Results } from './types'
 
@@ -13,6 +14,8 @@ const heading=computed(()=>data.value?.live?'即時排名結果':'最終票選�
 const formatNumber=(value:number)=>value.toLocaleString('zh-TW')
 const formatDateTime=(value?:string)=>value?new Intl.DateTimeFormat('zh-TW',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Taipei'}).format(new Date(value)):'讀取中'
 const groupName=(category:Category)=>category==='individual'?'個人組':'團體組'
+const resultCatalog=computed(()=>data.value?[...data.value.groups.individual,...data.value.groups.team]:[])
+const workNumber=(video:{id:number;number:string;category:Category})=>displayWorkNumber(video,resultCatalog.value)
 const laurel=(category:Category)=>assetPath(`images/${category==='individual'?'laurel-individual':'laurel-team'}.svg`)
 const homeUrl=homePath(),resultsUrl=resultsPath()
 async function openWork(id:number){
@@ -36,8 +39,8 @@ onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
     </nav>
     <div class="hero-art-stage">
       <picture class="hero-official-art" aria-hidden="true">
-        <source media="(max-width: 800px)" :srcset="assetPath('assets/campaign/banner/hero-mobile-title.svg')">
-        <img :src="assetPath('assets/campaign/banner/hero-desktop-title.svg')" alt="">
+        <source media="(max-width: 800px)" :srcset="assetPath('assets/campaign/banner/hero-mobile-title.webp')" type="image/webp">
+        <img :src="assetPath('assets/campaign/banner/hero-desktop-title.webp')" width="2260" height="1301" alt="" decoding="async" fetchpriority="high">
       </picture>
       <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選結果</h1>
     </div>
@@ -51,11 +54,11 @@ onBeforeUnmount(()=>{if(refreshTimer)window.clearInterval(refreshTimer)})
         <div class="final-results-columns">
           <section v-for="category in (['individual','team'] as Category[])" :key="category" class="final-group" :class="`final-group-${category}`" :aria-labelledby="`${category}ResultTitle`">
             <h3 :id="`${category}ResultTitle`" class="visually-hidden">{{groupName(category)}}票選結果</h3>
-            <article v-if="data.groups[category][0]" class="final-winner result-work-link" role="link" tabindex="0" :aria-label="`開啟作品 ${data.groups[category][0].number} ${data.groups[category][0].title}`" @click="openWork(data.groups[category][0].id)" @keydown.enter="openWork(data.groups[category][0].id)" @keydown.space.prevent="openWork(data.groups[category][0].id)">
-              <div class="final-winner-poster"><img :src="assetPath(data.groups[category][0].poster)" alt="" loading="lazy"></div>
-              <div class="final-winner-copy"><div class="final-winner-award"><img class="winner-laurel winner-laurel-left" :src="laurel(category)" alt="" aria-hidden="true"><div class="final-winner-award-copy"><span>{{groupName(category)}}</span><strong>第一名</strong></div><img class="winner-laurel winner-laurel-right" :src="laurel(category)" alt="" aria-hidden="true"></div><p>作品 {{data.groups[category][0].number}}</p><h4>{{data.groups[category][0].title}}</h4><small>{{data.groups[category][0].team}}</small><b>{{formatNumber(data.groups[category][0].votes)}}<span>票</span></b></div>
+            <article v-if="data.groups[category][0]" class="final-winner result-work-link" role="link" tabindex="0" :aria-label="`開啟作品 ${workNumber(data.groups[category][0])} ${data.groups[category][0].title}`" @click="openWork(data.groups[category][0].id)" @keydown.enter="openWork(data.groups[category][0].id)" @keydown.space.prevent="openWork(data.groups[category][0].id)">
+              <div class="final-winner-poster"><img :src="posterPath(data.groups[category][0].poster,1080)" :srcset="posterSrcSet(data.groups[category][0].poster)" sizes="(max-width: 520px) 46vw, 42vw" width="1080" height="1920" alt="" loading="lazy" decoding="async"></div>
+              <div class="final-winner-copy"><div class="final-winner-award"><img class="winner-laurel winner-laurel-left" :src="laurel(category)" alt="" aria-hidden="true"><div class="final-winner-award-copy"><span>{{groupName(category)}}</span><strong>第一名</strong></div><img class="winner-laurel winner-laurel-right" :src="laurel(category)" alt="" aria-hidden="true"></div><p>作品 {{workNumber(data.groups[category][0])}}</p><h4>{{data.groups[category][0].title}}</h4><small>{{data.groups[category][0].team}}</small><b>{{formatNumber(data.groups[category][0].votes)}}<span>票</span></b></div>
             </article>
-            <div class="final-ranking-table"><div class="final-ranking-head" aria-hidden="true"><span>名次</span><span>作品</span><span>票數</span></div><ol><li v-for="item in data.groups[category].slice(1)" :key="item.id" class="result-work-link" role="link" tabindex="0" :aria-label="`開啟作品 ${item.number} ${item.title}`" @click="openWork(item.id)" @keydown.enter="openWork(item.id)" @keydown.space.prevent="openWork(item.id)"><strong>{{item.rank}}</strong><span><b>{{item.number}}｜{{item.title}}</b><small>{{item.team}}</small></span><em>{{formatNumber(item.votes)}}票</em></li></ol></div>
+            <div class="final-ranking-table"><div class="final-ranking-head" aria-hidden="true"><span>名次</span><span>作品</span><span>票數</span></div><ol><li v-for="item in data.groups[category].slice(1)" :key="item.id" class="result-work-link" role="link" tabindex="0" :aria-label="`開啟作品 ${workNumber(item)} ${item.title}`" @click="openWork(item.id)" @keydown.enter="openWork(item.id)" @keydown.space.prevent="openWork(item.id)"><strong>{{item.rank}}</strong><span><b>{{workNumber(item)}}｜{{item.title}}</b><small>{{item.team}}</small></span><em>{{formatNumber(item.votes)}}票</em></li></ol></div>
           </section>
         </div>
       </section>

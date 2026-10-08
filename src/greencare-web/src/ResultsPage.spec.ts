@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import ResultsPage from './ResultsPage.vue'
 import type { Category, Results } from './types'
 
-const group=(category:Category,start:number)=>Array.from({length:15},(_,index)=>({id:start+index,number:String(start+index).padStart(2,'0'),title:`作品 ${start+index}`,team:`參賽單位 ${start+index}`,youtubeId:'video',poster:category==='individual'?'images/posters/individual-demo.jpg':'images/posters/team-demo.jpg',category,votes:15-index,rank:index+1}))
-const results:Results={published:false,live:true,generatedAt:'2026-09-18T04:00:00Z',activity:{state:'active',startsAt:'2026-10-12T02:00:00Z',endsAt:'2026-10-23T09:00:00Z'},groups:{individual:group('individual',1),team:group('team',16)}}
+const group=(category:Category,start:number,length:number)=>Array.from({length},(_,index)=>({id:start+index,number:String(start+index).padStart(2,'0'),title:`作品 ${start+index}`,team:`參賽單位 ${start+index}`,youtubeId:'video',poster:category==='individual'?'images/posters/individual-demo.jpg':'images/posters/team-demo.jpg',category,votes:length-index,rank:index+1}))
+const results:Results={published:false,live:true,generatedAt:'2026-09-18T04:00:00Z',activity:{state:'active',startsAt:'2026-10-12T02:00:00Z',endsAt:'2026-10-23T09:00:00Z'},groups:{individual:group('individual',1,13),team:group('team',14,14)}}
 
 describe('ResultsPage',()=>{
   afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers()})
@@ -14,8 +14,9 @@ describe('ResultsPage',()=>{
     await flushPromises()
     expect(wrapper.get('#resultsPageHeading').text()).toBe('即時排名結果')
     expect(wrapper.findAll('.final-winner')).toHaveLength(2)
-    expect(wrapper.findAll('.final-ranking-table li')).toHaveLength(28)
+    expect(wrapper.findAll('.final-ranking-table li')).toHaveLength(25)
     expect(wrapper.find('.final-winner-copy h4').text()).toBe('作品 1')
+    expect(wrapper.findAll('.final-winner-copy p').map(item=>item.text())).toEqual(['作品 01','作品 01'])
     expect(wrapper.text()).not.toContain('每 30 秒更新')
   })
 

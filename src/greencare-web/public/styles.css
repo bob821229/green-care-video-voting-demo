@@ -81,14 +81,14 @@ footer{background:var(--moss);color:#fff}footer a{color:#fff}
 
 /* Results banner reuses the organizer artwork while retaining its own copy and summary card. */
 .result-hero{
-  background:#fae3db url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
+  background:#fae3db url('assets/campaign/banner/hero-desktop-bg.webp') center top/100% auto no-repeat
 }
 .result-hero::before,
 .result-hero::after{content:none}
 
 @media(max-width:800px){
   .result-hero{
-    background-image:url('assets/campaign/banner/hero-mobile-bg.png');
+    background-image:url('assets/campaign/banner/hero-mobile-bg.webp');
     background-position:center top;
     background-size:100% auto
   }
@@ -479,7 +479,7 @@ body,
   width:100%;
   height:clamp(360px,31.25vw,600px);
   overflow:hidden;
-  background:#fbe7df url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
+  background:#fbe7df url('assets/campaign/banner/hero-desktop-bg.webp') center top/100% auto no-repeat
 }
 .hero-official-art{
   position:absolute;
@@ -536,7 +536,7 @@ body,
   }
   .hero-art-stage{
     height:min(100vw,600px);
-    background-image:url('assets/campaign/banner/hero-mobile-bg.png')
+    background-image:url('assets/campaign/banner/hero-mobile-bg.webp')
   }
   .hero-official-art{padding:12px}
   .hero-official-art img{
@@ -627,7 +627,7 @@ body,
 @media(max-width:1100px){
   .result-hero{
     height:clamp(520px,78vw,650px);
-    background-image:url('assets/campaign/banner/hero-mobile-bg.png');
+    background-image:url('assets/campaign/banner/hero-mobile-bg.webp');
     background-position:center top;
     background-size:100% auto
   }
@@ -657,7 +657,7 @@ body,
 .result-hero::before,.result-hero::after{content:none}
 .result-art-stage{
   position:relative;width:100%;height:clamp(360px,31.25vw,600px);overflow:hidden;
-  background:#fbe7df url('assets/campaign/banner/hero-desktop-bg.png') center top/100% auto no-repeat
+  background:#fbe7df url('assets/campaign/banner/hero-desktop-bg.webp') center top/100% auto no-repeat
 }
 .result-hero-inner{
   position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
@@ -684,7 +684,7 @@ body,
 }
 
 @media(max-width:800px){
-  .result-art-stage{height:min(100vw,600px);background-image:url('assets/campaign/banner/hero-mobile-bg.png')}
+  .result-art-stage{height:min(100vw,600px);background-image:url('assets/campaign/banner/hero-mobile-bg.webp')}
   .result-official-art{padding:12px 0}
   .result-official-art img{width:min(68%,700px);max-height:calc(100% - 24px)}
   .result-hero-inner{padding:10px 16px clamp(18px,5vw,28px)}

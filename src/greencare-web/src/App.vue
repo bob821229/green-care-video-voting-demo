@@ -2,11 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from './api'
 import { loadBootstrap } from './deviceContext'
-import { assetPath, resultsPath } from './paths'
+import { assetPath, posterPath, posterSrcSet, resultsPath } from './paths'
+import { displayWorkNumber } from './workNumber'
 import VotingDialogs from './VotingDialogs.vue'
 import type { Bootstrap, Category, Results } from './types'
 const category=ref<Category>('individual'), menuOpen=ref(false), bootstrap=ref<Bootstrap|null>(null), results=ref<Results|null>(null), loadError=ref('')
 const visibleVideos=computed(()=>bootstrap.value?.videos.filter(v=>v.category===category.value)??[])
+const workNumber=(video:{id:number;number:string;category:Category})=>displayWorkNumber(video,bootstrap.value?.videos??[])
 const categoryCounts=computed(()=>({individual:bootstrap.value?.videos.filter(v=>v.category==='individual').length??0,team:bootstrap.value?.videos.filter(v=>v.category==='team').length??0}))
 const totalVideos=computed(()=>bootstrap.value?.videos.length??0)
 const remaining=computed(()=>Math.max(0,bootstrap.value?.remaining[category.value]??2))
@@ -31,8 +33,8 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
     </nav>
     <div class="hero-art-stage">
       <picture class="hero-official-art" aria-hidden="true">
-        <source media="(max-width: 800px)" :srcset="assetPath('assets/campaign/banner/hero-mobile-title.svg')">
-        <img :src="assetPath('assets/campaign/banner/hero-desktop-title.svg')" alt="">
+        <source media="(max-width: 800px)" :srcset="assetPath('assets/campaign/banner/hero-mobile-title.webp')" type="image/webp">
+        <img :src="assetPath('assets/campaign/banner/hero-desktop-title.webp')" width="2260" height="1301" alt="" decoding="async" fetchpriority="high">
       </picture>
       <h1 class="visually-hidden">綠照好時光－短影音競賽網路人氣票選，票選期間 10 月 12 日 10:00 至 10 月 23 日 17:00</h1>
       <div class="hero-inner hero-inner-hidden" aria-hidden="true">
@@ -56,15 +58,15 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
       <div class="group-heading"><div><p>{{category==='individual'?'個人組':'團體組'}}</p><span>{{category==='individual'?'個人參賽作品':'團體參賽作品'}}</span></div><strong aria-live="polite">已投 {{2-remaining}} 票 / 尚餘 {{remaining}} 票</strong></div>
       <p v-if="loadError" class="empty" role="alert">{{loadError}}</p>
       <div v-else id="videoGrid" class="video-grid" :data-category="category" role="tabpanel" :aria-labelledby="`${category}Tab`" aria-live="polite">
-        <button v-for="video in visibleVideos" :key="video.id" class="video-card" :class="{voted:voteFor(video.id)}" type="button" :aria-label="`作品 ${video.number} ${video.title}，${cardStatus(video.id)}`" @click="dialogs?.open(video.id)">
-          <span class="card-poster"><img :src="assetPath(video.poster)" alt="" loading="lazy"><span class="video-number">{{video.number}}</span><span class="card-state">{{cardStatus(video.id)}}</span></span>
+        <button v-for="video in visibleVideos" :key="video.id" class="video-card" :class="{voted:voteFor(video.id)}" type="button" :aria-label="`作品 ${workNumber(video)} ${video.title}，${cardStatus(video.id)}`" @click="dialogs?.open(video.id)">
+          <span class="card-poster"><img :src="posterPath(video.poster)" :srcset="posterSrcSet(video.poster)" sizes="(max-width: 520px) 46vw, (max-width: 800px) 31vw, 20vw" width="720" height="1280" alt="" loading="lazy" decoding="async"><span class="video-number">{{workNumber(video)}}</span><span class="card-state">{{cardStatus(video.id)}}</span></span>
           <span class="card-content"><h3>{{video.title}}</h3><span class="team">{{video.team}}</span><strong class="card-votes">{{resultFor(video.id)?.votes.toLocaleString('zh-TW')??'—'}}票</strong></span>
         </button>
       </div>
     </section>
     <section id="live-results" class="live-summary" aria-labelledby="liveResultsTitle">
       <div class="section-heading"><div class="live-title-row"><h2 id="liveResultsTitle">即時票選排行</h2></div><a class="primary-link" :href="resultsUrl">查看完整排名</a></div>
-      <div class="summary-groups"><div><h3>個人組</h3><ol class="summary-list"><li v-for="item in results?.groups.individual.slice(0,3)??[]" :key="item.id" :data-work-id="item.id" role="button" tabindex="0" :aria-label="`開啟作品 ${item.number} ${item.title}`" @click="dialogs?.open(item.id)" @keydown.enter="dialogs?.open(item.id)" @keydown.space.prevent="dialogs?.open(item.id)"><strong>{{item.rank}}</strong><span>作品 {{item.number}}・{{item.title}}</span><em><b>{{item.votes.toLocaleString('zh-TW')}}票</b></em></li></ol></div><div><h3>團體組</h3><ol class="summary-list"><li v-for="item in results?.groups.team.slice(0,3)??[]" :key="item.id" :data-work-id="item.id" role="button" tabindex="0" :aria-label="`開啟作品 ${item.number} ${item.title}`" @click="dialogs?.open(item.id)" @keydown.enter="dialogs?.open(item.id)" @keydown.space.prevent="dialogs?.open(item.id)"><strong>{{item.rank}}</strong><span>作品 {{item.number}}・{{item.title}}</span><em><b>{{item.votes.toLocaleString('zh-TW')}}票</b></em></li></ol></div></div>
+      <div class="summary-groups"><div><h3>個人組</h3><ol class="summary-list"><li v-for="item in results?.groups.individual.slice(0,3)??[]" :key="item.id" :data-work-id="item.id" role="button" tabindex="0" :aria-label="`開啟作品 ${workNumber(item)} ${item.title}`" @click="dialogs?.open(item.id)" @keydown.enter="dialogs?.open(item.id)" @keydown.space.prevent="dialogs?.open(item.id)"><strong>{{item.rank}}</strong><span>作品 {{workNumber(item)}}・{{item.title}}</span><em><b>{{item.votes.toLocaleString('zh-TW')}}票</b></em></li></ol></div><div><h3>團體組</h3><ol class="summary-list"><li v-for="item in results?.groups.team.slice(0,3)??[]" :key="item.id" :data-work-id="item.id" role="button" tabindex="0" :aria-label="`開啟作品 ${workNumber(item)} ${item.title}`" @click="dialogs?.open(item.id)" @keydown.enter="dialogs?.open(item.id)" @keydown.space.prevent="dialogs?.open(item.id)"><strong>{{item.rank}}</strong><span>作品 {{workNumber(item)}}・{{item.title}}</span><em><b>{{item.votes.toLocaleString('zh-TW')}}票</b></em></li></ol></div></div>
       <p class="results-updated">即時排名非最終結果，最終獲獎以主辦單位公告為準。<span class="summary-timestamp">最後更新：<time>{{results?.generatedAt??'讀取中'}}</time></span></p>
     </section>
   </main>

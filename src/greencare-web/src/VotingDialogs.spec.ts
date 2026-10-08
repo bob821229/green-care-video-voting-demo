@@ -18,9 +18,13 @@ describe('VotingDialogs',()=>{
     await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(1)
     expect(wrapper.get('.watch-dialog').attributes()).toHaveProperty('open')
     expect(wrapper.get('.watch-heading h2').text()).toBe('作品 1')
+    expect(wrapper.get('.watch-heading .watch-team').text()).toBe('參賽者 1')
     expect(wrapper.get('.progress-label strong').text()).toBe('85%')
     expect(wrapper.get('.demo-captcha').text()).toContain('本機開發驗證')
     expect(wrapper.get('.vote-button').attributes('disabled')).toBeUndefined()
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(14)
+    expect(wrapper.get('.watch-heading .eyebrow').text()).toBe('團體組 01')
+    expect(wrapper.get('.watch-heading .watch-team').text()).toBe('參賽者 14')
   })
 
   it('renders and reveals Google reCAPTCHA for a qualified production work',async()=>{
