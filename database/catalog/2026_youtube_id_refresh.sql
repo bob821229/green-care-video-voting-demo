@@ -56,7 +56,7 @@ VALUES
     (8,  '08', 'individual', 8,  N'學習製作愛玉',                          'Mv3c-2vxwik', 'yqUDv_KS9yU'),
     (9,  '09', 'individual', 9,  N'優游自在的沈愛姐',                      'M0umYSS_n4M', 'hRB_S0_HzFw'),
     (10, '10', 'individual', 10, N'有伴的日子，真好',                      'L3xhH2Q93dY', 'WTGS7q90ZSw'),
-    (11, '11', 'individual', 11, N'阿綢姐的月餅',                          'bVEwqxv2pac', 'bVEwqxv2pac'),
+    (11, '11', 'individual', 11, N'阿綢姐的月餅',                          'bVEwqxv2pac', 'mJU7TKDgXFI'),
     (12, '12', 'individual', 12, N'菜園旁的幸福食堂',                      'eC-ZaOIhfNs', 'lr0hRKBrr34'),
     (13, '13', 'individual', 13, N'自己種，安心又好吃',                    'y1CcH9lENsg', 'pWeOqIiWU-o'),
     (14, '14', 'team',       1,  N'芒果樹葉拓印團體創作',                  'XcyBVVrgtZ4', 'XcyBVVrgtZ4'),
