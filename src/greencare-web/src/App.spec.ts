@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App.vue'
 
-const videos = Array.from({ length: 27 }, (_, index) => ({ id:index+1, number:String(index+1).padStart(2,'0'), title:`作品 ${index+1}`, team:`參賽者 ${index+1}`, youtubeId:'video', poster:index<13?'images/posters/individual-demo.jpg':'images/posters/team-demo.jpg', category:index<13?'individual':'team' }))
+const videos = Array.from({ length: 27 }, (_, index) => ({ id:index+1, number:String(index+1).padStart(2,'0'), title:`作品 ${index+1}`, team:index===0?'參賽者 黃○鳳':`參賽者 ${index+1}`, youtubeId:'video', poster:index<13?'images/posters/individual-demo.jpg':'images/posters/team-demo.jpg', category:index<13?'individual':'team' }))
 const ranked = (category:'individual'|'team') => videos.filter(video=>video.category===category).map((video,index)=>({...video,votes:index===0?12:index===1?8:0,rank:index+1}))
 
 describe('App',()=>{
@@ -22,7 +22,9 @@ describe('App',()=>{
     expect(wrapper.get('#individualTab small').text()).toBe('13 支初賽入圍')
     expect(wrapper.get('.video-card .video-number').text()).toBe('01')
     expect(wrapper.get('.video-card h3').text()).toBe('作品 1')
-    expect(wrapper.get('.video-card .team').text()).toBe('參賽者 1')
+    expect(wrapper.get('.video-card .team').text()).toBe('參賽者 黃○鳳')
+    expect(wrapper.get('.video-card .team').attributes('aria-label')).toBe('參賽者 黃○鳳')
+    expect(wrapper.get('.video-card .participant-mask').text()).toBe('○')
     expect(wrapper.get('.summary-list li>span').text()).toBe('作品 01・作品 1')
     expect(wrapper.get('.summary-list li>em').text()).toBe('12票')
     expect(wrapper.find('.summary-list li>em small').exists()).toBe(false)

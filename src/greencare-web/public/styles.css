@@ -735,6 +735,13 @@ body,
 .works .category-tab small,
 .group-heading span,
 .works .video-card .team{font-size:var(--type-level-6)}
+.works .video-card .participant-mask{
+  display:inline-block;
+  font-size:1.28em;
+  font-weight:700;
+  line-height:0;
+  transform:translateY(.02em)
+}
 .works .group-heading>strong{font-size:var(--type-level-4)}
 .live-summary .primary-link{font-size:var(--type-level-6)}
 .summary-list li>strong{font-size:var(--type-level-2)}

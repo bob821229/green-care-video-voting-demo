@@ -14,6 +14,7 @@ const totalVideos=computed(()=>bootstrap.value?.videos.length??0)
 const remaining=computed(()=>Math.max(0,bootstrap.value?.remaining[category.value]??2))
 const voteFor=(id:number)=>bootstrap.value?.votes.find(v=>v.videoId===id)
 const resultFor=(id:number)=>results.value&&[...results.value.groups.individual,...results.value.groups.team].find(v=>v.id===id)
+const participantLabelParts=(label:string)=>label.split('○')
 function cardStatus(id:number){const vote=voteFor(id);if(vote)return vote.status==='flagged'?'待確認':'已投票';const ratio=bootstrap.value?.progress.find(p=>p.videoId===id)?.ratio??0;return ratio>=.8?'可投票':ratio>0?`已觀看 ${Math.floor(ratio*100)}%`:'開始觀看'}
 const dialogs=ref<InstanceType<typeof VotingDialogs>>()
 const resultsUrl=resultsPath()
@@ -60,7 +61,7 @@ onBeforeUnmount(()=>{if(resultsTimer)window.clearInterval(resultsTimer)})
       <div v-else id="videoGrid" class="video-grid" :data-category="category" role="tabpanel" :aria-labelledby="`${category}Tab`" aria-live="polite">
         <button v-for="video in visibleVideos" :key="video.id" class="video-card" :class="{voted:voteFor(video.id)}" type="button" :aria-label="`作品 ${workNumber(video)} ${video.title}，${cardStatus(video.id)}`" @click="dialogs?.open(video.id)">
           <span class="card-poster"><img :src="posterPath(video.poster)" :srcset="posterSrcSet(video.poster)" sizes="(max-width: 520px) 46vw, (max-width: 800px) 31vw, 20vw" width="720" height="1280" alt="" loading="lazy" decoding="async"><span class="video-number">{{workNumber(video)}}</span><span class="card-state">{{cardStatus(video.id)}}</span></span>
-          <span class="card-content"><h3>{{video.title}}</h3><span class="team">{{video.team}}</span><strong class="card-votes">{{resultFor(video.id)?.votes.toLocaleString('zh-TW')??'—'}}票</strong></span>
+          <span class="card-content"><h3>{{video.title}}</h3><span class="team" :aria-label="video.team"><template v-for="(part,index) in participantLabelParts(video.team)" :key="index"><span>{{part}}</span><span v-if="index<participantLabelParts(video.team).length-1" class="participant-mask" aria-hidden="true">○</span></template></span><strong class="card-votes">{{resultFor(video.id)?.votes.toLocaleString('zh-TW')??'—'}}票</strong></span>
         </button>
       </div>
     </section>
