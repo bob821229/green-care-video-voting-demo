@@ -12,7 +12,173 @@ beforeAll(()=>{
 })
 
 describe('VotingDialogs',()=>{
-  afterEach(()=>{vi.unstubAllGlobals();delete window.grecaptcha;document.querySelectorAll('script[data-recaptcha-api]').forEach(script=>script.remove())})
+  afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();localStorage.clear();delete window.grecaptcha;delete window.YT;document.querySelectorAll('script[data-recaptcha-api]').forEach(script=>script.remove())})
+
+  it('waits for YouTube to report a valid duration before starting a watch session',async()=>{
+    vi.useFakeTimers()
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({sessionId:'watch-session'})})
+    vi.stubGlobal('fetch',fetchMock)
+    const getDuration=vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(76)
+    window.YT={
+      PlayerState:{PLAYING:1},
+      Player:vi.fn(function(_host:HTMLElement,options:{events:{onReady:()=>void}}){
+        const instance={getDuration,getCurrentTime:()=>0,getPlaybackRate:()=>1,destroy:vi.fn()}
+        window.setTimeout(options.events.onReady,0)
+        return instance
+      })
+    }
+    const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(2)
+    await vi.advanceTimersByTimeAsync(1100)
+    await flushPromises()
+
+    expect(getDuration).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/watch/start',expect.objectContaining({
+      method:'POST',
+      body:JSON.stringify({videoId:2,duration:76})
+    }))
+    expect(wrapper.get('.message').text()).toBe('')
+  })
+
+  it('retries watch session initialization when playback starts after duration loading timed out',async()=>{
+    vi.useFakeTimers()
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({sessionId:'watch-session'})})
+    vi.stubGlobal('fetch',fetchMock)
+    let duration=0
+    let onStateChange:(event:{data:number})=>void=()=>{}
+    window.YT={
+      PlayerState:{PLAYING:1},
+      Player:vi.fn(function(_host:HTMLElement,options:{events:{onReady:()=>void;onStateChange:(event:{data:number})=>void}}){
+        onStateChange=options.events.onStateChange
+        const instance={getDuration:()=>duration,getCurrentTime:()=>0,getPlaybackRate:()=>1,destroy:vi.fn()}
+        window.setTimeout(options.events.onReady,0)
+        return instance
+      })
+    }
+    const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(18)
+    await vi.advanceTimersByTimeAsync(10000)
+    await flushPromises()
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(wrapper.get('.message').text()).toContain('自動繼續嘗試')
+
+    duration=76
+    onStateChange({data:1})
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/watch/start',expect.objectContaining({body:JSON.stringify({videoId:18,duration:76})}))
+    expect(wrapper.get('.message').text()).toBe('')
+  })
+
+  it('recovers duration initialization without requiring another playback-state event',async()=>{
+    vi.useFakeTimers()
+    const fetchMock=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({sessionId:'watch-session'})})
+    vi.stubGlobal('fetch',fetchMock)
+    let duration=0
+    window.YT={
+      PlayerState:{PLAYING:1},
+      Player:vi.fn(function(_host:HTMLElement,options:{events:{onReady:()=>void}}){
+        const instance={getDuration:()=>duration,getCurrentTime:()=>0,getPlaybackRate:()=>1,getPlayerState:()=>1,destroy:vi.fn()}
+        window.setTimeout(options.events.onReady,0)
+        return instance
+      })
+    }
+    const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(19)
+    await vi.advanceTimersByTimeAsync(10000)
+    await flushPromises()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    duration=76
+    await vi.advanceTimersByTimeAsync(1100)
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/watch/start',expect.objectContaining({body:JSON.stringify({videoId:19,duration:76})}))
+    expect(wrapper.get('.message').text()).toBe('')
+  })
+
+  it('updates and stores client progress without waiting for a server progress response',async()=>{
+    vi.useFakeTimers()
+    const fetchMock=vi.fn().mockResolvedValueOnce({ok:true,status:200,json:async()=>({sessionId:'watch-session'})})
+    vi.stubGlobal('fetch',fetchMock)
+    let position=0
+    window.YT={
+      PlayerState:{PLAYING:1},
+      Player:vi.fn(function(_host:HTMLElement,options:{events:{onReady:()=>void}}){
+        const instance={getDuration:()=>89,getCurrentTime:()=>position,getPlaybackRate:()=>1,getPlayerState:()=>-1,destroy:vi.fn()}
+        window.setTimeout(options.events.onReady,0)
+        return instance
+      })
+    }
+    const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(14)
+    await vi.advanceTimersByTimeAsync(0)
+    await flushPromises()
+
+    position=1
+    await vi.advanceTimersByTimeAsync(1000)
+    position=2
+    await vi.advanceTimersByTimeAsync(3000)
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(wrapper.get('.progress-label strong').text()).not.toBe('0%')
+    expect(localStorage.getItem('greencare-client-watch-v1')).toContain('"videoId":14')
+  })
+  it('keeps client progress running when server watch initialization fails',async()=>{
+    vi.useFakeTimers()
+    vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new Error('network unavailable')))
+    let position=0
+    window.YT={
+      PlayerState:{PLAYING:1},
+      Player:vi.fn(function(_host:HTMLElement,options:{events:{onReady:()=>void}}){
+        const instance={getDuration:()=>100,getCurrentTime:()=>position,getPlaybackRate:()=>1,getPlayerState:()=>1,destroy:vi.fn()}
+        window.setTimeout(options.events.onReady,0)
+        return instance
+      })
+    }
+    const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(15)
+    await vi.advanceTimersByTimeAsync(0)
+    await flushPromises()
+
+    position=1
+    await vi.advanceTimersByTimeAsync(1000)
+    position=4
+    await vi.advanceTimersByTimeAsync(3000)
+
+    expect(wrapper.get('.progress-label strong').text()).not.toBe('0%')
+    expect(localStorage.getItem('greencare-client-watch-v1')).toContain('"videoId":15')
+    expect(wrapper.get('.message').text()).toContain('進度仍會保存在此瀏覽器')
+  })
+  it('continues accumulating valid seconds after reopening before the previous playback position',async()=>{
+    vi.useFakeTimers()
+    localStorage.setItem('greencare-client-watch-v1',JSON.stringify({15:{videoId:15,youtubeId:'video',duration:100,watchedSeconds:24,lastPosition:24,updatedAt:new Date().toISOString()}}))
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({sessionId:'watch-session'})}))
+    let position=0
+    window.YT={
+      PlayerState:{PLAYING:1},
+      Player:vi.fn(function(_host:HTMLElement,options:{events:{onReady:()=>void}}){
+        const instance={getDuration:()=>100,getCurrentTime:()=>position,getPlaybackRate:()=>1,getPlayerState:()=>1,destroy:vi.fn()}
+        window.setTimeout(options.events.onReady,0)
+        return instance
+      })
+    }
+    const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
+    await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(15)
+    await vi.advanceTimersByTimeAsync(0)
+    await flushPromises()
+    expect(wrapper.get('.progress-label strong').text()).toBe('24%')
+
+    position=1
+    await vi.advanceTimersByTimeAsync(1000)
+    position=2
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(wrapper.get('.progress-label strong').text()).toBe('26%')
+  })
   it('opens a qualified work with local captcha and an enabled vote action',async()=>{
     const wrapper=mount(VotingDialogs,{props:{data:structuredClone(base)}})
     await (wrapper.vm as unknown as {open:(id:number)=>Promise<void>}).open(1)

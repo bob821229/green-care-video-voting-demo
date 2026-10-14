@@ -1,4 +1,5 @@
 using GreenCare.Api.Data;
+using GreenCare.Api.Data.Entities;
 using GreenCare.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public sealed class VoteRiskService(GreenCareDbContext db, IVoteEnvironmentServi
             .Distinct()
             .CountAsync(cancellationToken);
         var score = VoteRiskCalculator.Calculate(recentIp, others);
-        return new VoteRisk(ipHash, signalHash, (byte)score, score >= 60 ? "flagged" : "valid", recentIp, others);
+        return new VoteRisk(ipHash, signalHash, (byte)score, VoteRiskCalculator.Status(score), recentIp, others);
     }
 }
 
@@ -34,4 +35,8 @@ public static class VoteRiskCalculator
 {
     public static int Calculate(int recentIp, int otherDevices) =>
         Math.Clamp((recentIp - 20) * 4 + otherDevices * 25, 0, 100);
+
+    // Risk remains available for audit, but accepted votes are counted immediately.
+    // Cross-browser duplicate and quota enforcement is handled separately by VotingEndpoints.
+    public static string Status(int score) => VoteStatuses.Valid;
 }

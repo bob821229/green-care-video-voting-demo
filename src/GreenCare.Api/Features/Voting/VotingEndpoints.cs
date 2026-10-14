@@ -4,6 +4,7 @@ using GreenCare.Api.Data;
 using GreenCare.Api.Data.Entities;
 using GreenCare.Api.Features.Devices;
 using GreenCare.Api.Features.Videos;
+using GreenCare.Api.Features.Watching;
 using GreenCare.Api.Infrastructure;
 using GreenCare.Api.Features.ResultData;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,8 @@ public static class VotingEndpoints
         IVoteRiskService riskService, IVideoCatalog catalog, GreenCareDbContext db,
         IResultsCache resultsCache, TimeProvider timeProvider, CancellationToken cancellationToken)
     {
-        var deviceId = await devices.GetOrCreateAsync(context, cancellationToken);
+        var identity = await devices.GetOrCreateDetailedAsync(context, cancellationToken);
+        var deviceId = identity.DeviceId;
         if (activity.GetStatus().State != ActivityState.Active)
             return Results.Json(new { error = "目前不在投票期間。" }, statusCode: StatusCodes.Status403Forbidden);
         if (string.IsNullOrWhiteSpace(request.DeviceSignal) || request.DeviceSignal.Length > 512)
@@ -55,8 +57,19 @@ public static class VotingEndpoints
                 .ToArray();
             var error = VoteLimitValidator.Validate(activeVotes, video, deviceId);
             if (error is not null) return await RollbackConflictAsync(transaction, error, cancellationToken);
-            var watchId = await FindQualifiedWatchAsync(db, deviceId, video.Id, cancellationToken);
-            if (watchId is null) return await RollbackConflictAsync(transaction, "請先有效觀看這支影片達 80%。", cancellationToken);
+            Guid? watchId;
+            if (request.WatchProgress is not null)
+            {
+                var progressError = ClientWatchProgressWriter.ValidateQualified(request.WatchProgress, video);
+                if (progressError is not null) return await RollbackConflictAsync(transaction, progressError, cancellationToken);
+                var watch = await ClientWatchProgressWriter.WriteAsync(db, deviceId, video, request.WatchProgress, now, cancellationToken);
+                watchId = watch.Id;
+            }
+            else
+            {
+                watchId = await FindQualifiedWatchAsync(db, deviceId, video.Id, cancellationToken);
+                if (watchId is null) return await RollbackConflictAsync(transaction, "請先有效觀看這支影片達 80%。", cancellationToken);
+            }
 
             var vote = BuildVote(deviceId, video, watchId.Value, risk, now);
             db.Votes.Add(vote);

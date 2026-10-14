@@ -9,3 +9,10 @@ public sealed record WatchProgressRequest(
     bool Playing,
     bool Visible,
     string? Event);
+
+public sealed record ClientWatchProgressRequest(
+    int VideoId,
+    string? YoutubeId,
+    double Duration,
+    double WatchedSeconds,
+    double LastPosition);

@@ -205,6 +205,7 @@ main{padding-top:1px}.rules-brief{max-width:1180px;margin:64px auto 0;padding:0 
 .watch-info .cancel-vote-button{align-self:center;min-height:58px;padding:12px 22px;font-size:clamp(.95rem,1.1vw,1.1rem);line-height:1.2}
 .watch-info .recaptcha-box{display:flex;min-height:78px;margin:8px 0;align-items:center}
 .watch-info .recaptcha-box:not(.captcha-visible)>*{visibility:hidden;pointer-events:none}
+.captcha-support{width:100%}.captcha-row{display:flex;align-items:center;gap:12px;min-width:0}.captcha-row .recaptcha-box{flex:0 1 304px;min-width:0}.captcha-refresh{display:grid;flex:0 0 44px;width:44px;height:44px;padding:0;place-items:center;border:1px solid rgba(23,103,53,.25);border-radius:12px;background:rgba(255,250,246,.88);color:var(--moss);cursor:pointer;transition:background .2s ease,border-color .2s ease,transform .2s ease}.captcha-refresh:hover:not(:disabled),.captcha-refresh:focus-visible:not(:disabled){border-color:var(--moss);background:#fff;transform:rotate(8deg)}.captcha-refresh:focus-visible{outline:3px solid var(--terra);outline-offset:3px}.captcha-refresh:disabled{cursor:wait;opacity:.65}.captcha-refresh svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.captcha-refresh svg.is-spinning{animation:captcha-spin .8s linear infinite}.captcha-help{display:grid;gap:2px;margin:3px 0 0;color:#53655b;font-size:.78rem;line-height:1.5;font-weight:500}.captcha-help span,.captcha-help small{display:block}.captcha-help small{color:#748179;font:inherit;font-size:.72rem}@keyframes captcha-spin{to{transform:rotate(360deg)}}
 .video-pagination{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
 .video-pagination button{display:flex;align-items:center;gap:9px;border:0;background:transparent;color:#66766d;font:800 clamp(.9rem,1.05vw,1.05rem) Epilogue,"Noto Sans TC",sans-serif;cursor:pointer;transition:color .25s ease,transform .25s ease}
 .video-pagination button:hover:not(:disabled),.video-pagination button:focus-visible:not(:disabled){color:#EA6872;transform:translateY(-2px)}
@@ -820,3 +821,8 @@ body,
 .demo-captcha small,
 .confirm-eyebrow{font-size:var(--type-level-7)}
 .confirm-copy h2{font-size:var(--type-level-2)}
+.captcha-help small{font-size:inherit}
+.captcha-refresh:hover:not(:disabled),.captcha-refresh:focus-visible:not(:disabled){transform:none}
+.captcha-refresh svg{transition:transform .25s ease}
+.captcha-refresh:hover:not(:disabled) svg,.captcha-refresh:focus-visible:not(:disabled) svg{transform:rotate(35deg)}
+.captcha-refresh:hover:not(:disabled) svg.is-spinning,.captcha-refresh:focus-visible:not(:disabled) svg.is-spinning{animation:captcha-spin .8s linear infinite}

@@ -22,7 +22,23 @@ public static class PublicApiEndpoints
             .RequireRateLimiting(RateLimitPolicies.WatchStartIp);
         endpoints.MapPost("/api/watch/progress", UpdateProgressAsync)
             .RequireRateLimiting(RateLimitPolicies.WatchProgressIp);
+        endpoints.MapPost("/api/watch/client-sync", SyncClientProgressAsync)
+            .RequireRateLimiting(RateLimitPolicies.WatchProgressIp);
         return endpoints;
+    }
+
+    private static async Task<IResult> SyncClientProgressAsync(
+        ClientWatchProgressRequest request, HttpContext context, IDeviceIdentityService devices,
+        IVideoCatalog videos, TimeProvider timeProvider, GreenCareDbContext db, CancellationToken cancellationToken)
+    {
+        var deviceId = await devices.GetOrCreateAsync(context, cancellationToken);
+        var video = await videos.FindAsync(request.VideoId, cancellationToken);
+        if (video is null) return Results.Conflict(new { error = "找不到這支作品。" });
+        var error = ClientWatchProgressWriter.ValidateFields(request, video);
+        if (error is not null) return Results.BadRequest(new { error });
+        var watch = await ClientWatchProgressWriter.WriteAsync(db, deviceId, video, request, timeProvider.GetUtcNow().UtcDateTime, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { ratio = watch.WatchedSeconds / watch.DurationSeconds, qualified = watch.QualifiedAtUtc != null });
     }
 
     private static async Task<IResult> BootstrapAsync(

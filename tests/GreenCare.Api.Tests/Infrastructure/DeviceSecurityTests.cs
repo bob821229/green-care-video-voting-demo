@@ -35,16 +35,52 @@ public sealed class DeviceSecurityTests
             Options.Create(new SecurityOptions { AppSecret = Secret, DeviceCookieName = "vote_device" }),
             new TestHostEnvironment("Production"));
 
-        var deviceId = service.GetOrCreate(context);
+        var result = service.GetOrCreate(context);
         var setCookie = context.Response.Headers.SetCookie.ToString();
 
-        Assert.NotEqual(Guid.Empty, deviceId);
+        Assert.NotEqual(Guid.Empty, result.DeviceId);
+        Assert.Equal(DeviceCookieStatus.Missing, result.Status);
         Assert.Contains("vote_device=", setCookie);
         Assert.Contains("max-age=31536000", setCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("path=/", setCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("httponly", setCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("secure", setCookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("samesite=lax", setCookie, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Invalid_cookie_is_reissued_and_reported_without_reusing_its_device_id()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Cookie = "vote_device=not-a-valid-token";
+        var service = new DeviceCookieService(
+            CreateTokenService(),
+            Options.Create(new SecurityOptions { AppSecret = Secret, DeviceCookieName = "vote_device" }),
+            new TestHostEnvironment("Production"));
+
+        var result = service.GetOrCreate(context);
+
+        Assert.NotEqual(Guid.Empty, result.DeviceId);
+        Assert.Equal(DeviceCookieStatus.Invalid, result.Status);
+        Assert.Contains("vote_device=", context.Response.Headers.SetCookie.ToString());
+    }
+
+    [Fact]
+    public void Valid_cookie_is_reused_without_issuing_a_replacement()
+    {
+        var expected = Guid.NewGuid();
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Cookie = $"vote_device={CreateTokenService().Create(expected)}";
+        var service = new DeviceCookieService(
+            CreateTokenService(),
+            Options.Create(new SecurityOptions { AppSecret = Secret, DeviceCookieName = "vote_device" }),
+            new TestHostEnvironment("Production"));
+
+        var result = service.GetOrCreate(context);
+
+        Assert.Equal(expected, result.DeviceId);
+        Assert.Equal(DeviceCookieStatus.Valid, result.Status);
+        Assert.Empty(context.Response.Headers.SetCookie);
     }
 
     [Fact]
