@@ -11,8 +11,9 @@ declare global {
 
 const props=defineProps<{data:Bootstrap}>()
 const emit=defineEmits<{updated:[Bootstrap];resultsChanged:[]}>()
-const watchDialog=ref<HTMLDialogElement>(),confirmDialog=ref<HTMLDialogElement>(),playerHost=ref<HTMLElement>(),captchaBox=ref<HTMLElement>(),developmentCaptchaInput=ref<HTMLInputElement>()
+const watchDialog=ref<HTMLDialogElement>(),watchCloseButton=ref<HTMLButtonElement>(),confirmDialog=ref<HTMLDialogElement>(),playerHost=ref<HTMLElement>(),captchaBox=ref<HTMLElement>(),developmentCaptchaInput=ref<HTMLInputElement>()
 const current=ref<Video|null>(null),player=ref<any>(null),playerState=ref<number|null>(null),sessionId=ref(''),timer=ref<number>(),captchaToken=ref(''),captchaId=ref<number|null>(null),captchaReloading=ref(false),busy=ref(false),message=ref(''),messageError=ref(false)
+const isWatchOpen=ref(false)
 const confirmTitle=ref(''),confirmMessage=ref(''),confirmText=ref('確認'),confirmTone=ref('vote')
 let confirmationResolve:((answer:boolean)=>void)|null=null
 let captchaLoadPromise:Promise<void>|null=null
@@ -31,6 +32,9 @@ let clientWatchedSeconds=0
 let clientReportedPosition=0
 let lastClientPosition:number|null=null
 let lastLocalSaveAt=0
+let lockedScrollY=0
+let previousFocus:HTMLElement|null=null
+let pageStyleSnapshot:{htmlOverflow:string;bodyOverflow:string;bodyPosition:string;bodyTop:string;bodyWidth:string}|null=null
 
 const groupName=computed(()=>current.value?.category==='team'?'團體組':'個人組')
 const currentVote=computed(()=>current.value?props.data.votes.find(v=>v.videoId===current.value!.id):undefined)
@@ -152,9 +156,40 @@ async function syncClientProgress(){
 function clearTimer(){if(timer.value)window.clearInterval(timer.value);timer.value=undefined;lastObservedPosition=null;lastClientTickAt=null}
 function resetCaptcha(){captchaToken.value='';if(captchaId.value!==null)window.grecaptcha?.enterprise?.reset(captchaId.value);if(developmentCaptchaInput.value)developmentCaptchaInput.value.checked=false}
 
-  async function open(videoId:number){const video=props.data.videos.find(v=>v.id===videoId);if(!video)return;playerGeneration++;sessionInitializationGeneration=null;clearInitializationRetry();clearTimer();player.value?.destroy?.();resetCaptcha();current.value=video;restoreClientProgress(video);sessionId.value='';playerState.value=null;message.value='';syncUrl(video.id);watchDialog.value?.showModal();await nextTick();if(props.data.recaptchaSiteKey)void loadCaptchaScript().catch(()=>{/* setupCaptcha will show an error if the user becomes eligible. */});if(showCaptcha.value)await setupCaptcha();void createPlayer(video)}
+function lockPageScroll(){
+  if(pageStyleSnapshot)return
+  lockedScrollY=window.scrollY
+  pageStyleSnapshot={htmlOverflow:document.documentElement.style.overflow,bodyOverflow:document.body.style.overflow,bodyPosition:document.body.style.position,bodyTop:document.body.style.top,bodyWidth:document.body.style.width}
+  document.documentElement.style.overflow='hidden'
+  document.body.style.overflow='hidden'
+  document.body.style.position='fixed'
+  document.body.style.top=`-${lockedScrollY}px`
+  document.body.style.width='100%'
+}
+function unlockPageScroll(){
+  if(!pageStyleSnapshot)return
+  const snapshot=pageStyleSnapshot
+  pageStyleSnapshot=null
+  document.documentElement.style.overflow=snapshot.htmlOverflow
+  document.body.style.overflow=snapshot.bodyOverflow
+  document.body.style.position=snapshot.bodyPosition
+  document.body.style.top=snapshot.bodyTop
+  document.body.style.width=snapshot.bodyWidth
+  window.scrollTo({top:lockedScrollY,left:0,behavior:'instant'})
+}
+function trapWatchFocus(event:KeyboardEvent){
+  if(event.key!=='Tab'||!watchDialog.value)return
+  const focusable=Array.from(watchDialog.value.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])')).filter(element=>!element.hasAttribute('hidden')&&element.getClientRects().length>0)
+  if(!focusable.length)return
+  const first=focusable[0],last=focusable[focusable.length-1]
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+}
+function watchKeydown(event:KeyboardEvent){if(event.key==='Escape'&&isWatchOpen.value&&!confirmDialog.value?.open){event.preventDefault();close()}}
+
+  async function open(videoId:number){const video=props.data.videos.find(v=>v.id===videoId);if(!video)return;playerGeneration++;sessionInitializationGeneration=null;clearInitializationRetry();clearTimer();player.value?.destroy?.();resetCaptcha();current.value=video;restoreClientProgress(video);sessionId.value='';playerState.value=null;message.value='';syncUrl(video.id);const opening=!watchDialog.value?.open;if(opening){previousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;lockPageScroll();isWatchOpen.value=true;watchDialog.value?.show()}await nextTick();if(opening)watchCloseButton.value?.focus({preventScroll:true});if(props.data.recaptchaSiteKey)void loadCaptchaScript().catch(()=>{/* setupCaptcha will show an error if the user becomes eligible. */});if(showCaptcha.value)await setupCaptcha();void createPlayer(video)}
 async function navigate(offset:number){const target=videosInGroup.value[currentIndex.value+offset];if(!target)return;await syncClientProgress();await open(target.id)}
-function close(){playerGeneration++;sessionInitializationGeneration=null;clearInitializationRetry();clearTimer();void syncClientProgress();player.value?.stopVideo?.();player.value?.destroy?.();player.value=null;watchDialog.value?.close();syncUrl()}
+function close(){playerGeneration++;sessionInitializationGeneration=null;clearInitializationRetry();clearTimer();void syncClientProgress();player.value?.stopVideo?.();player.value?.destroy?.();player.value=null;watchDialog.value?.close();isWatchOpen.value=false;unlockPageScroll();syncUrl();const target=previousFocus;previousFocus=null;window.requestAnimationFrame(()=>target?.focus({preventScroll:true}))}
 
   async function loadCaptchaScript(){
     if(!props.data.recaptchaSiteKey||window.grecaptcha?.enterprise)return
@@ -213,7 +248,8 @@ async function visibilityChanged(){
 function pageHiding(){const payload=clientProgressPayload();if(!payload)return;saveClientProgress(true);navigator.sendBeacon?.('/api/watch/client-sync',new Blob([JSON.stringify(payload)],{type:'application/json'}))}
 document.addEventListener('visibilitychange',visibilityChanged)
 window.addEventListener('pagehide',pageHiding)
-onBeforeUnmount(()=>{playerGeneration++;document.removeEventListener('visibilitychange',visibilityChanged);window.removeEventListener('pagehide',pageHiding);clearInitializationRetry();clearTimer();player.value?.destroy?.()})
+window.addEventListener('keydown',watchKeydown)
+onBeforeUnmount(()=>{playerGeneration++;document.removeEventListener('visibilitychange',visibilityChanged);window.removeEventListener('pagehide',pageHiding);window.removeEventListener('keydown',watchKeydown);clearInitializationRetry();clearTimer();player.value?.destroy?.();unlockPageScroll()})
 defineExpose({open})
 </script>
 
@@ -221,8 +257,9 @@ defineExpose({open})
   <dialog ref="confirmDialog" class="confirm-dialog" :data-tone="confirmTone" aria-labelledby="confirmTitle" aria-describedby="confirmMessage" @cancel.prevent="finishConfirmation(false)" @click.self="finishConfirmation(false)">
     <div class="confirm-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></svg></div><div class="confirm-copy"><p class="confirm-eyebrow">投票確認</p><h2 id="confirmTitle">{{confirmTitle}}</h2><p id="confirmMessage">{{confirmMessage}}</p></div><div class="confirm-actions"><button class="confirm-secondary" type="button" @click="finishConfirmation(false)">返回</button><button class="confirm-primary" type="button" @click="finishConfirmation(true)">{{confirmText}}</button></div>
   </dialog>
-  <dialog ref="watchDialog" class="watch-dialog" :data-category="current?.category" @cancel.prevent="close">
-    <button class="close" type="button" aria-label="關閉播放器" @click="close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <div v-if="isWatchOpen" class="watch-backdrop" aria-hidden="true" @click="close"></div>
+  <dialog ref="watchDialog" class="watch-dialog" :data-category="current?.category" aria-modal="true" aria-label="作品觀看與投票" @cancel.prevent="close" @keydown="trapWatchFocus">
+    <button ref="watchCloseButton" class="close" type="button" aria-label="關閉播放器" @click="close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <div class="player-wrap"><div ref="playerHost"></div><div v-if="current&&!current.youtubeId" class="unavailable">影片尚未設定，請稍後再來。</div></div>
     <div class="watch-info">
       <div class="watch-heading"><p class="eyebrow">{{groupName}} {{currentNumber}}</p><h2>{{current?.title}}</h2><p class="watch-team">{{current?.team}}</p></div>

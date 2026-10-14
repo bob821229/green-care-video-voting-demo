@@ -7,6 +7,7 @@ const videos:Video[] = Array.from({length:27},(_,index)=>({id:index+1,number:Str
 const base:Bootstrap={videos,votes:[],progress:[{videoId:1,ratio:.85,qualified:true}],limits:{individual:2,team:2},remaining:{individual:2,team:2},allowVoteCancellation:false,activity:{state:'active',startsAt:'2026-01-01',endsAt:'2026-12-31'},recaptchaSiteKey:'',demo:false}
 
 beforeAll(()=>{
+  HTMLDialogElement.prototype.show=vi.fn(function(this:HTMLDialogElement){this.setAttribute('open','')})
   HTMLDialogElement.prototype.showModal=vi.fn(function(this:HTMLDialogElement){this.setAttribute('open','')})
   HTMLDialogElement.prototype.close=vi.fn(function(this:HTMLDialogElement){this.removeAttribute('open')})
 })
