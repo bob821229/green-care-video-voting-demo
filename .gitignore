@@ -5,6 +5,8 @@ data/*.db
 data/*.db-*
 .env
 npm-debug.log*
+/*-preview.log
+/*-preview-error.log
 dist/
 artifacts/
 .local/
